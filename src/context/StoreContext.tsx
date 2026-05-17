@@ -16,6 +16,7 @@ import * as catalog from '../lib/catalog';
 import { repairCategoryTree, repairProductCategories } from '../lib/categoryAssign';
 import { deduplicateProducts } from '../lib/productDedupe';
 import { toIdbImageRef } from '../lib/productImageStore';
+import { fetchServerCatalog } from '../lib/serverCatalog';
 
 function applyCatalogRepair(
   products: Product[],
@@ -94,6 +95,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return applyCatalogRepair(prods, loaded).categories;
   });
   const [site, setSite] = useState<SiteConfig>(() => load(KEYS.site, DEFAULT_SITE));
+
+  /** Каталог с сервера (public/catalog) — для всех посетителей после деплоя */
+  useEffect(() => {
+    if (localStorage.getItem(KEYS.products)) return;
+    let cancelled = false;
+    (async () => {
+      const bundle = await fetchServerCatalog();
+      if (cancelled || !bundle) return;
+      const repaired = applyCatalogRepair(
+        bundle.products,
+        bundle.categories ?? defaultCategories,
+      );
+      setProducts(repaired.products);
+      setCategories(repaired.categories);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => save(KEYS.products, products), [products]);
   useEffect(() => save(KEYS.categories, categories), [categories]);

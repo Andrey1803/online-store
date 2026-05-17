@@ -301,6 +301,22 @@ export function AdminImport() {
         <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.5rem' }}>
           Или полный импорт каталога ниже с галочкой «Импортировать фото».
         </p>
+        <p
+          style={{
+            color: '#0f766e',
+            fontSize: '0.85rem',
+            marginTop: '1rem',
+            lineHeight: 1.6,
+            padding: '0.75rem',
+            background: '#f0fdfa',
+            borderRadius: 8,
+          }}
+        >
+          <strong>Сайт на Railway:</strong> импорт в админке сохраняет фото только в этом браузере.
+          Чтобы фото видели все посетители, на компьютере с прайсом выполните{' '}
+          <code>npm run export-catalog -- путь\к\прайсу.xlsx</code>, затем закоммитьте{' '}
+          <code>public/catalog</code> и сделайте push в GitHub.
+        </p>
       </div>
     </div>
   );
