@@ -1,0 +1,85 @@
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useCustomerAuth } from '../context/CustomerAuthContext';
+import { useStore } from '../context/StoreContext';
+import { useCart } from '../context/CartContext';
+import { BackButton, getStoreBackFallback, getStoreBackLabel } from './BackButton';
+import './Layout.css';
+
+export function Layout() {
+  const { site } = useStore();
+  const { totalCount } = useCart();
+  const { user, isAuthenticated } = useCustomerAuth();
+  const location = useLocation();
+  const showBack = location.pathname !== '/';
+
+  return (
+    <div className="app">
+      <header className="header">
+        <div className="header-top">
+          <span>{site.city}</span>
+          <a href={site.phoneHref}>{site.phone}</a>
+        </div>
+        <div className="header-main">
+          {showBack && (
+            <BackButton
+              className="back-btn--header"
+              fallback={getStoreBackFallback(location.pathname)}
+              label={getStoreBackLabel(location.pathname)}
+            />
+          )}
+          <Link to="/" className="logo">
+            <span className="logo-icon">💧</span>
+            <span>
+              <strong>{site.name}</strong>
+              <small>{site.tagline}</small>
+            </span>
+          </Link>
+          <nav className="nav">
+            <Link to="/catalog">Каталог</Link>
+            <Link to="/delivery">Доставка</Link>
+            <Link to="/contacts">Контакты</Link>
+          </nav>
+          <Link
+            to={isAuthenticated ? '/account' : '/account/login'}
+            className="account-btn"
+            title={isAuthenticated ? user?.name : 'Войти'}
+          >
+            {isAuthenticated ? `👤 ${user?.name.split(' ')[0] ?? 'Кабинет'}` : 'Войти'}
+          </Link>
+          <Link to="/cart" className="cart-btn">
+            🛒 Корзина
+            {totalCount > 0 && <span className="cart-badge">{totalCount}</span>}
+          </Link>
+        </div>
+      </header>
+
+      <main className="main">
+        <Outlet />
+      </main>
+
+      <footer className="footer">
+        <div className="footer-grid">
+          <div>
+            <strong>{site.name}</strong>
+            <p>Насосное оборудование, автоматика, баки и комплектующие.</p>
+          </div>
+          <div>
+            <strong>Каталог</strong>
+            <Link to="/catalog/nasosy">Насосы</Link>
+            <Link to="/catalog/baki">Баки</Link>
+            <Link to="/catalog/komplektuyushchie">Комплектующие</Link>
+          </div>
+          <div>
+            <strong>Контакты</strong>
+            <a href={site.phoneHref}>{site.phone}</a>
+            <a href={`mailto:${site.email}`}>{site.email}</a>
+            <Link to="/admin/login" className="footer-admin-link">
+              Вход для администратора
+            </Link>
+          </div>
+        </div>
+        <p className="footer-copy">© {new Date().getFullYear()} {site.name}. {site.markupNote}</p>
+      </footer>
+    </div>
+  );
+}

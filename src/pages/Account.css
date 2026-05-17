@@ -1,0 +1,180 @@
+.account-page {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.account-page--wide {
+  max-width: 720px;
+}
+
+.account-card {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.account-card h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.account-card .account-lead {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin-bottom: 1.25rem;
+}
+
+.account-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.account-tabs button {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #f8fafc;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color: #475569;
+}
+
+.account-tabs button.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.account-form label {
+  display: block;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.account-form input,
+.account-form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.account-error {
+  color: #dc2626;
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem;
+}
+
+.account-success {
+  color: #16a34a;
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem;
+}
+
+.account-footer-link {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.account-footer-link a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.account-profile-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.account-profile-email {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.account-orders {
+  margin-top: 2rem;
+}
+
+.account-orders h2 {
+  font-size: 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.account-order-item {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background: #f8fafc;
+}
+
+.account-order-item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.account-order-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.account-order-status--in_progress {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.account-order-status--done {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.account-order-status--cancelled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.account-order-lines {
+  font-size: 0.85rem;
+  color: #475569;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.account-guest-hint {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: #0369a1;
+  margin-bottom: 1rem;
+}
+
+.account-guest-hint a {
+  font-weight: 600;
+}

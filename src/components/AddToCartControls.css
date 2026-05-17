@@ -1,0 +1,99 @@
+.add-to-cart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.add-to-cart--detail {
+  margin-top: 0.25rem;
+}
+
+.add-to-cart--card {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-to-cart-qty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.add-to-cart--card .add-to-cart-qty {
+  gap: 0.25rem;
+}
+
+.add-to-cart-qty-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.add-to-cart--card .add-to-cart-qty-label {
+  font-size: 0.7rem;
+}
+
+.qty-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.qty-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.qty-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.qty-input {
+  width: 3.5rem;
+  height: 32px;
+  text-align: center;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  -moz-appearance: textfield;
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.add-to-cart--card .qty-btn,
+.add-to-cart--card .qty-input {
+  height: 28px;
+}
+
+.add-to-cart--card .qty-btn {
+  width: 28px;
+  font-size: 1rem;
+}
+
+.add-to-cart--card .qty-input {
+  width: 2.75rem;
+  font-size: 0.85rem;
+}
+
+.add-to-cart--card .btn {
+  width: 100%;
+  font-size: 0.8rem;
+  padding: 0.5rem;
+}
+
+.add-to-cart--compact {
+  gap: 0;
+}

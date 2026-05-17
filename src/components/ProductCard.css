@@ -1,0 +1,159 @@
+.product-card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(3, 105, 161, 0.12);
+}
+
+.product-card-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  max-height: 112px;
+  padding: 0.5rem;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+.product-card-placeholder {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.product-card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0.35rem;
+}
+
+.product-brand {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.product-name {
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.3;
+  flex: 1;
+}
+
+.product-card-specs {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.product-card-specs li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.product-card-spec-label {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.product-card-spec-value {
+  color: var(--color-text);
+  font-weight: 600;
+  text-align: right;
+}
+
+.product-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  align-items: flex-end;
+}
+
+.product-card-actions .btn-outline {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.product-card-actions .add-to-cart--card {
+  flex: 1 1 140px;
+}
+
+/* Компактная карточка для блоков на главной: фото как в каталоге, блок текста ~в 2 раза меньше */
+.product-card--compact {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.product-card--compact .product-card-image {
+  flex: 0 0 108px;
+  width: 108px;
+  min-height: 72px;
+  max-height: 112px;
+  padding: 0.5rem;
+}
+
+.product-card--compact .product-card-body {
+  padding: 0.45rem 0.55rem;
+  gap: 0.15rem;
+  justify-content: center;
+}
+
+.product-card--compact .product-brand {
+  font-size: 0.65rem;
+}
+
+.product-card--compact .product-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.25;
+  flex: 1;
+  min-height: 0;
+  letter-spacing: 0.01em;
+}
+
+.product-card--compact .product-prices {
+  line-height: 1.2;
+}
+
+.product-card--compact .price-current {
+  font-size: 0.9rem;
+}
+
+.product-card--compact .price-old {
+  font-size: 0.75rem;
+  margin-left: 0.35rem;
+}
+
+.product-card--compact .product-card-actions {
+  margin-top: 0.35rem;
+}
+
+.product-card--compact .add-to-cart--compact {
+  width: 100%;
+}
+
+.product-card--compact .add-to-cart--compact .btn {
+  width: 100%;
+  font-size: 0.72rem;
+  padding: 0.4rem 0.5rem;
+}

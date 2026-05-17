@@ -1,0 +1,53 @@
+.smart-filter-collapsible {
+  position: relative;
+}
+
+.smart-filter-collapsible-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.35rem;
+  width: 100%;
+  cursor: pointer;
+  margin-bottom: 0;
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.smart-filter-collapsible-hint {
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.smart-filter-collapsible-body {
+  overflow: hidden;
+  transition:
+    max-height 0.2s ease,
+    opacity 0.15s ease,
+    margin-top 0.15s ease;
+}
+
+.smart-filter-collapsible.is-collapsed .smart-filter-collapsible-body {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  pointer-events: none;
+}
+
+.smart-filter-collapsible.is-expanded .smart-filter-collapsible-body {
+  max-height: 280px;
+  opacity: 1;
+  margin-top: 0.2rem;
+}
+
+.smart-filter-collapsible.is-expanded .smart-filter-collapsible-body--compact {
+  max-height: 130px;
+}
+
+@media (hover: hover) {
+  .smart-filter-collapsible.is-collapsed:hover {
+    background: var(--color-surface);
+    border-radius: 6px;
+  }
+}
