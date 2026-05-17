@@ -15,6 +15,11 @@ export async function blobToDataUrlOriginal(blob: Blob): Promise<string> {
 
 /** Импорт в каталог: оригинальный размер из файла, без canvas/JPEG */
 export async function blobToStoredDataUrl(blob: Blob): Promise<string> {
+  if (typeof FileReader === 'undefined') {
+    const mime = blob.type || 'image/png';
+    const buf = Buffer.from(await blob.arrayBuffer());
+    return `data:${mime};base64,${buf.toString('base64')}`;
+  }
   return blobToDataUrlOriginal(blob);
 }
 

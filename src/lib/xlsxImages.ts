@@ -109,7 +109,10 @@ function parseDrawingRels(relsXml: string): Map<string, string> {
   const re = /Id="([^"]+)"[^>]*Target="([^"]+)"/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(relsXml))) {
-    map.set(m[1], m[2].replace(/^\.\.\/media\//, ''));
+    const target = m[2];
+    if (target.includes('!') || target.startsWith('#')) continue;
+    if (!target.includes('media')) continue;
+    map.set(m[1], target.replace(/^\.\.\/media\//, ''));
   }
   return map;
 }
