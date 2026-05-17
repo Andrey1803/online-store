@@ -1,3 +1,7 @@
+import { parseSpecSortKey } from './fractionParse';
+
+const FRACTION_SPEC_LABELS = new Set(['Диаметр', 'Размер', 'Тип соединения']);
+
 const LABEL_ALIASES: Record<string, string> = {
   объем: 'Объём',
   объём: 'Объём',
@@ -64,11 +68,14 @@ export function normalizeSpecValue(label: string, value: string): string {
     }
   }
 
-  if (canonical === 'Диаметр' || canonical === 'Размер') {
+  if (canonical === 'Диаметр' || canonical === 'Размер' || canonical === 'Тип соединения') {
     return v
       .replace(/х/g, '×')
       .replace(/X/g, '×')
       .replace(/\s*×\s*/g, '×')
+      .replace(/(\d+)\s*[-−\s]+\s*(\d+)\s*\/\s*(\d+)/g, '$1-$2/$3')
+      .replace(/(\d+)\s*\/\s*(\d+)/g, '$1/$2')
+      .replace(/[""″]/g, '"')
       .replace(/\s*мм\b/i, ' мм')
       .trim();
   }
@@ -84,5 +91,12 @@ export function parseLeadingNumber(value: string): number | null {
 }
 
 export function specValuesEqual(label: string, a: string, b: string): boolean {
-  return normalizeSpecValue(label, a) === normalizeSpecValue(label, b);
+  const canonical = normalizeSpecLabel(label);
+  const na = normalizeSpecValue(canonical, a);
+  const nb = normalizeSpecValue(canonical, b);
+  if (na === nb) return true;
+  if (!FRACTION_SPEC_LABELS.has(canonical)) return false;
+  const ka = parseSpecSortKey(na);
+  const kb = parseSpecSortKey(nb);
+  return ka != null && kb != null && Math.abs(ka - kb) < 0.02;
 }

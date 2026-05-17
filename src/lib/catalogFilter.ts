@@ -1,4 +1,5 @@
 import type { Product } from '../data/products';
+import { parseSpecSortKey, textContainsFraction } from './fractionParse';
 import { getProductSpecs } from './productSpecs';
 import { normalizeSpecLabel, normalizeSpecValue, specValuesEqual } from './specNormalize';
 
@@ -63,13 +64,11 @@ const NUMERIC_SPEC_LABELS = new Set([
   'Напор',
   'Давление',
   'Подача',
+  'Тип соединения',
 ]);
 
 export function parseSpecNumericValue(value: string): number | null {
-  const m = value.replace(',', '.').match(/([\d.]+)/);
-  if (!m) return null;
-  const n = parseFloat(m[1]!);
-  return Number.isNaN(n) ? null : n;
+  return parseSpecSortKey(value);
 }
 
 export function sortSpecFacetValues(
@@ -152,7 +151,19 @@ export function getFilterFacets(products: Product[]): FilterFacets {
   };
 }
 
-function searchScore(product: Product, tokens: string[]): number {
+function productSearchHaystack(product: Product): string {
+  return [
+    product.name,
+    product.brand,
+    product.description,
+    product.article ?? '',
+    ...getProductSpecs(product).map((s) => `${s.label} ${s.value}`),
+  ]
+    .join(' ')
+    .toLowerCase();
+}
+
+function searchScore(product: Product, tokens: string[], haystack: string): number {
   const name = product.name.toLowerCase();
   const brand = product.brand.toLowerCase();
   const article = (product.article ?? '').toLowerCase();
@@ -163,6 +174,7 @@ function searchScore(product: Product, tokens: string[]): number {
     else if (name.includes(t)) score += 20;
     else if (brand.startsWith(t)) score += 15;
     else if (brand.includes(t)) score += 8;
+    else if (textContainsFraction(haystack, t)) score += 18;
     else score += 1;
   }
   return score;
@@ -174,19 +186,15 @@ export function smartSearchProducts(products: Product[], query: string): Product
 
   const tokens = q.split(/\s+/).filter(Boolean);
   const matched = products.filter((p) => {
-    const haystack = [
-      p.name,
-      p.brand,
-      p.description,
-      p.article ?? '',
-      ...getProductSpecs(p).map((s) => `${s.label} ${s.value}`),
-    ]
-      .join(' ')
-      .toLowerCase();
-    return tokens.every((t) => haystack.includes(t));
+    const haystack = productSearchHaystack(p);
+    return tokens.every((t) => haystack.includes(t) || textContainsFraction(haystack, t));
   });
 
-  return matched.sort((a, b) => searchScore(b, tokens) - searchScore(a, tokens));
+  return matched.sort(
+    (a, b) =>
+      searchScore(b, tokens, productSearchHaystack(b)) -
+      searchScore(a, tokens, productSearchHaystack(a)),
+  );
 }
 
 export function applyCatalogFilters(
@@ -243,7 +251,11 @@ function sortProducts(products: Product[], sort: SortOption, searchQuery?: strin
     case 'relevance':
       if (q) {
         const tokens = q.toLowerCase().split(/\s+/).filter(Boolean);
-        return copy.sort((a, b) => searchScore(b, tokens) - searchScore(a, tokens));
+        return copy.sort(
+          (a, b) =>
+            searchScore(b, tokens, productSearchHaystack(b)) -
+            searchScore(a, tokens, productSearchHaystack(a)),
+        );
       }
       return copy;
     default:

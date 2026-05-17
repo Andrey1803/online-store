@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Category } from '../data/categories';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import {
-  CatalogCategoryBranch,
-  isCategoryUnderRoot,
-} from '../components/CatalogCategoryTree';
+import { CatalogCategoryBranch, CategoryTreeRow } from '../components/CatalogCategoryTree';
+import { isCategoryInTree } from '../lib/catalog';
 import { ProductCard } from '../components/ProductCard';
 import { CatalogFilter, DEFAULT_FILTERS } from '../components/CatalogFilter';
 import { useStore } from '../context/StoreContext';
@@ -39,20 +37,19 @@ export function Catalog() {
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
 
-  /** При переходе в категорию — раскрыть путь к ней в дереве */
+  /** При смене раздела — раскрыть путь к нему (не мешает ручному сворачиванию) */
   useEffect(() => {
     if (!category) return;
     setExpandedIds((prev) => {
       const next = new Set(prev);
       let cur: Category | undefined = category;
-      next.add(cur.id);
-      while (cur?.parentId) {
-        next.add(cur.parentId);
-        cur = getCategoryById(cur.parentId);
+      while (cur) {
+        next.add(cur.id);
+        cur = cur.parentId ? getCategoryById(cur.parentId) : undefined;
       }
       return next;
     });
-  }, [category?.id, category, getCategoryById]);
+  }, [category?.id, getCategoryById]);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedIds((prev) => {
@@ -113,18 +110,14 @@ export function Catalog() {
   };
 
   return (
-    <div className="catalog-page" key={`${categorySlug ?? 'all'}-${q}`}>
+    <div className="catalog-page">
       <div className="catalog-layout">
         <aside className="catalog-sidebar">
           <h2>Каталог</h2>
           <nav className="catalog-sidebar-nav" aria-label="Разделы каталога">
           <ul className="cat-list">
             <li>
-              <Link
-                to="/catalog"
-                className={!categorySlug ? 'active' : ''}
-                onClick={() => setExpandedIds(new Set())}
-              >
+              <Link to="/catalog" className={!categorySlug ? 'active' : ''}>
                 Все товары
               </Link>
             </li>
@@ -132,33 +125,25 @@ export function Catalog() {
               const catSubs = getSubcategories(cat.id);
               const hasChildren = catSubs.length > 0;
               const isExpanded = expandedIds.has(cat.id);
-              const isActive =
-                categorySlug === cat.slug || isCategoryUnderRoot(categories, category, cat.id);
+              const isActive = isCategoryInTree(categories, category, cat.id);
 
               return (
                 <li key={cat.id} className={isExpanded ? 'cat-item-expanded' : ''}>
-                  <Link
-                    to={`/catalog/${cat.slug}`}
-                    className={`cat-link ${isActive ? 'active' : ''}`}
-                    aria-expanded={hasChildren ? isExpanded : undefined}
-                    onClick={() => {
-                      if (hasChildren) toggleExpand(cat.id);
-                    }}
-                  >
-                    {hasChildren && (
-                      <span className="cat-chevron" aria-hidden>
-                        {isExpanded ? '▼' : '▶'}
-                      </span>
-                    )}
-                    <span className="cat-label">
-                      {cat.icon} {cat.name}
-                    </span>
-                  </Link>
+                  <CategoryTreeRow
+                    cat={cat}
+                    depth={0}
+                    hasChildren={hasChildren}
+                    isOpen={isExpanded}
+                    isActive={isActive}
+                    icon={cat.icon}
+                    onToggleExpand={toggleExpand}
+                  />
                   {isExpanded && hasChildren && (
                     <CatalogCategoryBranch
                       parentId={cat.id}
                       depth={0}
-                      categorySlug={categorySlug}
+                      categories={categories}
+                      activeCategory={category}
                       expandedIds={expandedIds}
                       getSubcategories={getSubcategories}
                       onToggleExpand={toggleExpand}

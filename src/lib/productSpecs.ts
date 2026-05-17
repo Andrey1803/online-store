@@ -188,17 +188,29 @@ export function parseSpecsFromText(text: string): ProductSpec[] {
     add('Диаметр', d.includes('мм') ? d : `${d} мм`);
   } else {
     const diameter =
-      src.match(/(?:присоединительный\s+)?диаметр\s*[:,\s]+([\d]+[,.]?\d*\s*(?:мм|"|''|″)?)/i) ??
+      src.match(/(?:присоединительный\s+)?диаметр\s*[:,\s]+([\d./\s\-×xх]+?)(?:\s*мм|["″]|,|\.|;|$)/i) ??
       src.match(/\b(?:DN|ДУ)\s*[-]?\s*([\d]+)\b/i) ??
-      src.match(/\b(\d+(?:[.,]\d+)?)\s*["″]\b/);
+      src.match(
+        /\b(\d+(?:\s*[xх×]\s*\d+(?:\s*[-\s]\s*\d+\s*\/\s*\d+)?)?)\s*["″]/i,
+      ) ??
+      src.match(/\b(\d+\s*\/\s*\d+)\s*["″]?/i) ??
+      src.match(/\b(\d+\s*[-\s]\s*\d+\s*\/\s*\d+)\s*["″]?/i);
     if (diameter) {
-      const d = diameter[1]!.trim();
+      const d = diameter[1]!.replace(/\s+/g, ' ').trim();
       if (/^[\d]+$/.test(d) && diameter[0]!.toUpperCase().includes('DN')) {
         add('Диаметр', `DN${d}`);
-      } else if (d.includes('мм')) add('Диаметр', d);
-      else if (d.includes('"') || d.includes('″')) add('Диаметр', `${d}"`);
+      } else if (/мм/i.test(diameter[0]!)) add('Диаметр', d.includes('мм') ? d : `${d} мм`);
+      else if (/\//.test(d) || /["″]/.test(d)) add('Диаметр', d.replace(/[""″]/g, '"'));
       else add('Диаметр', `${d} мм`);
     }
+  }
+
+  const inchInName =
+    src.match(/\b(\d+(?:\s*[xх×]\s*\d+)?(?:\s*[-\s]\s*\d+\s*\/\s*\d+)?)\s*["″]/i) ??
+    src.match(/\b(\d+\s*[-\s]\s*\d+\s*\/\s*\d+)\s*["″]?/i) ??
+    src.match(/\b(\d+\s*\/\s*\d+)\s*["″]/i);
+  if (inchInName && !found.has('Диаметр')) {
+    add('Диаметр', inchInName[1]!.replace(/\s+/g, ' ').trim() + '"');
   }
 
   const connType = parseConnectionType(src);

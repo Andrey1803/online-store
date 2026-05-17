@@ -1,24 +1,81 @@
 import { Link } from 'react-router-dom';
 import type { Category } from '../data/categories';
-import { getRootCategoryId } from '../lib/catalog';
+import { isCategoryInTree } from '../lib/catalog';
 
-type Props = {
+type BranchProps = {
   parentId: string;
   depth: number;
-  categorySlug?: string;
+  categories: Category[];
+  activeCategory?: Category;
   expandedIds: Set<string>;
   getSubcategories: (parentId: string) => Category[];
   onToggleExpand: (id: string) => void;
 };
 
+type TreeRowProps = {
+  cat: Category;
+  depth: number;
+  hasChildren: boolean;
+  isOpen: boolean;
+  isActive: boolean;
+  icon?: string;
+  onToggleExpand: (id: string) => void;
+};
+
+function CategoryTreeRow({
+  cat,
+  depth,
+  hasChildren,
+  isOpen,
+  isActive,
+  icon,
+  onToggleExpand,
+}: TreeRowProps) {
+  return (
+    <div
+      className="cat-row"
+      style={depth > 0 ? { paddingLeft: `${0.35 + depth * 0.65}rem` } : undefined}
+    >
+      {hasChildren ? (
+        <button
+          type="button"
+          className="cat-toggle"
+          aria-expanded={isOpen}
+          aria-label={isOpen ? `Свернуть «${cat.name}»` : `Развернуть «${cat.name}»`}
+          onClick={() => onToggleExpand(cat.id)}
+        >
+          <span className="cat-chevron" aria-hidden>
+            {isOpen ? '▼' : '▶'}
+          </span>
+        </button>
+      ) : (
+        <span className="cat-toggle-spacer" aria-hidden />
+      )}
+      <Link
+        to={`/catalog/${cat.slug}`}
+        className={`cat-link ${depth > 0 ? 'sub' : ''} ${isActive ? 'active' : ''}`}
+      >
+        {icon != null && icon !== '' ? (
+          <span className="cat-label">
+            {icon} {cat.name}
+          </span>
+        ) : (
+          <span className="cat-label">{cat.name}</span>
+        )}
+      </Link>
+    </div>
+  );
+}
+
 export function CatalogCategoryBranch({
   parentId,
   depth,
-  categorySlug,
+  categories,
+  activeCategory,
   expandedIds,
   getSubcategories,
   onToggleExpand,
-}: Props) {
+}: BranchProps) {
   const subs = getSubcategories(parentId);
   if (!subs.length) return null;
 
@@ -28,30 +85,24 @@ export function CatalogCategoryBranch({
         const children = getSubcategories(sub.id);
         const hasChildren = children.length > 0;
         const isOpen = expandedIds.has(sub.id);
+        const isActive = isCategoryInTree(categories, activeCategory, sub.id);
 
         return (
           <li key={sub.id} className={isOpen ? 'cat-item-expanded' : ''}>
-            <Link
-              to={`/catalog/${sub.slug}`}
-              className={`cat-link sub ${categorySlug === sub.slug ? 'active' : ''}`}
-              style={{ paddingLeft: `${0.5 + depth * 0.65}rem` }}
-              aria-expanded={hasChildren ? isOpen : undefined}
-              onClick={() => {
-                if (hasChildren) onToggleExpand(sub.id);
-              }}
-            >
-              {hasChildren && (
-                <span className="cat-chevron" aria-hidden>
-                  {isOpen ? '▼' : '▶'}
-                </span>
-              )}
-              <span className="cat-label">{sub.name}</span>
-            </Link>
+            <CategoryTreeRow
+              cat={sub}
+              depth={depth + 1}
+              hasChildren={hasChildren}
+              isOpen={isOpen}
+              isActive={isActive}
+              onToggleExpand={onToggleExpand}
+            />
             {isOpen && hasChildren && (
               <CatalogCategoryBranch
                 parentId={sub.id}
                 depth={depth + 1}
-                categorySlug={categorySlug}
+                categories={categories}
+                activeCategory={activeCategory}
                 expandedIds={expandedIds}
                 getSubcategories={getSubcategories}
                 onToggleExpand={onToggleExpand}
@@ -64,12 +115,4 @@ export function CatalogCategoryBranch({
   );
 }
 
-export function isCategoryUnderRoot(
-  categories: Category[],
-  active: Category | undefined,
-  rootId: string,
-): boolean {
-  if (!active) return false;
-  if (active.id === rootId) return true;
-  return getRootCategoryId(categories, active.id) === rootId;
-}
+export { CategoryTreeRow };

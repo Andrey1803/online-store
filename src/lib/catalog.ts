@@ -84,6 +84,17 @@ export function collectCategoryTreeIds(categories: Category[], rootId: string): 
   return ids;
 }
 
+/** Активная категория совпадает с узлом или лежит в его поддереве */
+export function isCategoryInTree(
+  categories: Category[],
+  active: Category | undefined,
+  nodeId: string,
+): boolean {
+  if (!active) return false;
+  if (active.id === nodeId) return true;
+  return collectCategoryTreeIds(categories, nodeId).has(active.id);
+}
+
 export function getCategoryById(categories: Category[], id: string): Category | undefined {
   return categories.find((c) => c.id === id);
 }
