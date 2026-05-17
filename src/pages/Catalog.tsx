@@ -117,6 +117,7 @@ export function Catalog() {
       <div className="catalog-layout">
         <aside className="catalog-sidebar">
           <h2>Каталог</h2>
+          <nav className="catalog-sidebar-nav" aria-label="Разделы каталога">
           <ul className="cat-list">
             <li>
               <Link
@@ -167,6 +168,7 @@ export function Catalog() {
               );
             })}
           </ul>
+          </nav>
         </aside>
 
         <div className="catalog-main">
