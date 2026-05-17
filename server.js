@@ -31,16 +31,20 @@ const server = createServer(async (req, res) => {
     const filePath = join(DIST, rel);
 
     let data;
+    const ext = extname(filePath);
     try {
       data = await readFile(filePath);
     } catch {
+      if (ext && ext !== '.html') {
+        res.statusCode = 404;
+        res.end('Not Found');
+        return;
+      }
       data = await readFile(join(DIST, 'index.html'));
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end(data);
       return;
     }
-
-    const ext = extname(filePath);
     res.setHeader('Content-Type', MIME[ext] || 'application/octet-stream');
     res.setHeader('Cache-Control', ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable');
     res.end(data);

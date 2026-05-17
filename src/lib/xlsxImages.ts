@@ -4,6 +4,23 @@ import { blobToStoredDataUrl } from '../utils/imageUpload';
 /** 1-based номер строки Excel → data URL */
 export type SheetImageMap = Map<number, string>;
 
+/** Фото в ячейке может быть на соседней строке (±maxDist) */
+export function imageForExcelRow(
+  excelRow: number,
+  imageByRow?: SheetImageMap,
+  maxDist = 3,
+): string | undefined {
+  if (!imageByRow?.size) return undefined;
+  if (imageByRow.has(excelRow)) return imageByRow.get(excelRow);
+  for (let d = 1; d <= maxDist; d++) {
+    const prev = imageByRow.get(excelRow - d);
+    if (prev) return prev;
+    const next = imageByRow.get(excelRow + d);
+    if (next) return next;
+  }
+  return undefined;
+}
+
 export async function extractAllSheetImages(
   buffer: ArrayBuffer,
 ): Promise<Map<string, SheetImageMap>> {

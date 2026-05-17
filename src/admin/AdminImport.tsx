@@ -315,7 +315,7 @@ export function AdminImport() {
           <strong>Сайт на Railway:</strong> импорт в админке сохраняет фото только в этом браузере.
           Чтобы фото видели все посетители, на компьютере с прайсом выполните{' '}
           <code>npm run export-catalog -- путь\к\прайсу.xlsx</code>, затем закоммитьте{' '}
-          <code>public/catalog</code> и сделайте push в GitHub.
+          <code>public/catalog</code> и <code>public/product-images</code>, затем push в GitHub.
         </p>
       </div>
     </div>

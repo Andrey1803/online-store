@@ -6,12 +6,13 @@ import { mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseAkvabregFile } from '../src/lib/akvabregImport';
+import { PRODUCT_IMAGES_PREFIX } from '../src/lib/serverCatalog';
 import type { Product } from '../src/data/products';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const OUT_DIR = join(ROOT, 'public', 'catalog');
-const IMG_DIR = join(OUT_DIR, 'images');
+const IMG_DIR = join(ROOT, 'public', 'product-images');
 
 function extFromDataUrl(dataUrl: string): string {
   const m = /^data:image\/([\w+.-]+);/i.exec(dataUrl);
@@ -47,7 +48,8 @@ async function main() {
   );
   console.log(`\nТоваров: ${result.products.length}, с фото в прайсе: ${result.stats.withPhotos}`);
 
-  await rm(OUT_DIR, { recursive: true, force: true });
+  await mkdir(OUT_DIR, { recursive: true });
+  await rm(IMG_DIR, { recursive: true, force: true });
   await mkdir(IMG_DIR, { recursive: true });
 
   let savedImages = 0;
@@ -59,7 +61,7 @@ async function main() {
       const ext = extFromDataUrl(image);
       const fileName = `${encodeURIComponent(p.article)}.${ext}`;
       await writeFile(join(IMG_DIR, fileName), dataUrlToBuffer(image));
-      image = `/catalog/images/${fileName}`;
+      image = `${PRODUCT_IMAGES_PREFIX}${fileName}`;
       savedImages++;
     } else if (image?.startsWith('http')) {
       /* внешние URL оставляем как есть */
@@ -79,7 +81,7 @@ async function main() {
   await writeFile(join(OUT_DIR, 'store.json'), JSON.stringify(bundle), 'utf8');
 
   console.log(`Готово: public/catalog/store.json`);
-  console.log(`Файлов фото: ${savedImages} в public/catalog/images/`);
+  console.log(`Файлов фото: ${savedImages} в public/product-images/`);
   console.log('Дальше: git add public/catalog && git commit && git push (деплой на Railway).');
 }
 

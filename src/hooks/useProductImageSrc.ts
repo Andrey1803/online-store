@@ -5,19 +5,29 @@ import {
   getProductImage,
   isIdbImageRef,
 } from '../lib/productImageStore';
-import { isServerCatalogImage } from '../lib/serverCatalog';
+import { isServerCatalogImage, PRODUCT_IMAGES_PREFIX } from '../lib/serverCatalog';
 
 function tryServerCatalogImage(
   article: string,
   onFound: (url: string) => void,
   isCancelled: () => boolean,
 ): void {
-  const base = `/catalog/images/${encodeURIComponent(article)}`;
-  const exts = ['jpg', 'png', 'webp', 'jpeg'];
-  let i = 0;
+  const bases = [
+    `${PRODUCT_IMAGES_PREFIX}${encodeURIComponent(article)}`,
+    `/catalog/images/${encodeURIComponent(article)}`,
+  ];
+  const exts = ['png', 'jpg', 'webp', 'jpeg'];
+  let bi = 0;
+  let ei = 0;
   const next = () => {
-    if (isCancelled() || i >= exts.length) return;
-    const url = `${base}.${exts[i++]}`;
+    if (isCancelled() || bi >= bases.length) return;
+    if (ei >= exts.length) {
+      bi++;
+      ei = 0;
+      next();
+      return;
+    }
+    const url = `${bases[bi]}.${exts[ei++]}`;
     const probe = new Image();
     probe.onload = () => {
       if (!isCancelled()) onFound(url);

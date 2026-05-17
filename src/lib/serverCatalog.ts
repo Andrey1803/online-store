@@ -3,6 +3,9 @@ import type { Product } from '../data/products';
 
 export const SERVER_CATALOG_URL = '/catalog/store.json';
 
+/** Папка фото вне /catalog/* — не пересекается с маршрутом каталога в React */
+export const PRODUCT_IMAGES_PREFIX = '/product-images/';
+
 export interface ServerCatalogBundle {
   version: number;
   exportedAt?: string;
@@ -11,12 +14,14 @@ export interface ServerCatalogBundle {
 }
 
 export function isServerCatalogImage(src?: string): boolean {
-  return Boolean(src?.startsWith('/catalog/images/'));
+  return Boolean(
+    src?.startsWith(PRODUCT_IMAGES_PREFIX) || src?.startsWith('/catalog/images/'),
+  );
 }
 
-/** Путь к фото на сервере (после export-catalog) */
+/** Путь к файлу фото на сервере (после export-catalog) */
 export function serverCatalogImagePath(article: string, ext: string): string {
-  return `/catalog/images/${encodeURIComponent(article)}.${ext}`;
+  return `${PRODUCT_IMAGES_PREFIX}${encodeURIComponent(article)}.${ext}`;
 }
 
 export async function fetchServerCatalog(): Promise<ServerCatalogBundle | null> {

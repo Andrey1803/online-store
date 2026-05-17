@@ -7,7 +7,7 @@ import { deduplicateProducts } from './productDedupe';
 import { parseSpecsFromText } from './productSpecs';
 import { resolveParentId } from './categoryHierarchy';
 import { resolveProductCategoryName } from './categoryAssign';
-import { extractAllSheetImages, type SheetImageMap } from './xlsxImages';
+import { extractAllSheetImages, imageForExcelRow, type SheetImageMap } from './xlsxImages';
 
 export type PriceMode = 'opt2' | 'rrc' | 'markup';
 
@@ -200,9 +200,12 @@ function parseSheet(
     let image: string | undefined;
     if (photo && String(photo).startsWith('http')) {
       image = String(photo).trim();
-    } else if (imageByRow?.has(i + 1)) {
-      image = imageByRow.get(i + 1);
-      stats.withPhotos++;
+    } else {
+      const rowImage = imageForExcelRow(i + 1, imageByRow);
+      if (rowImage) {
+        image = rowImage;
+        stats.withPhotos++;
+      }
     }
 
     products.push({
