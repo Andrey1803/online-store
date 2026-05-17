@@ -104,6 +104,8 @@ export const SUBCATEGORY_PARENT: Record<string, string> = {
 
   'Компрессионные муфты': 'komplektuyushchie',
 
+  'Компрессионные фитинги': 'komplektuyushchie',
+
   'Краны': 'komplektuyushchie',
 
   'Манометры': 'komplektuyushchie',
@@ -342,6 +344,8 @@ export function resolveParentId(categoryName: string, sheetName?: string): strin
   }
 
   if (SUBCATEGORY_PARENT[trimmed]) return SUBCATEGORY_PARENT[trimmed];
+
+  if (/компрессион/i.test(trimmed)) return 'komplektuyushchie';
 
   if (sheetName && SHEET_TO_PARENT[sheetName.trim()]) return SHEET_TO_PARENT[sheetName.trim()];
 

@@ -37,27 +37,25 @@ export function Catalog() {
 
   const category = categorySlug ? getCategoryBySlug(categorySlug) : undefined;
 
-  const expandedFromUrl = useMemo(() => {
-    const ids = new Set<string>();
-    if (!category) return ids;
-    let cur: Category | undefined = category;
-    ids.add(cur.id);
-    while (cur?.parentId) {
-      ids.add(cur.parentId);
-      cur = getCategoryById(cur.parentId);
-    }
-    return ids;
-  }, [category, getCategoryById]);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
 
-  const [manualExpanded, setManualExpanded] = useState<Set<string>>(() => new Set());
-
-  const expandedIds = useMemo(
-    () => new Set([...expandedFromUrl, ...manualExpanded]),
-    [expandedFromUrl, manualExpanded],
-  );
+  /** При переходе в категорию — раскрыть путь к ней в дереве */
+  useEffect(() => {
+    if (!category) return;
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      let cur: Category | undefined = category;
+      next.add(cur.id);
+      while (cur?.parentId) {
+        next.add(cur.parentId);
+        cur = getCategoryById(cur.parentId);
+      }
+      return next;
+    });
+  }, [category?.id, category, getCategoryById]);
 
   const toggleExpand = useCallback((id: string) => {
-    setManualExpanded((prev) => {
+    setExpandedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -124,12 +122,14 @@ export function Catalog() {
               <Link
                 to="/catalog"
                 className={!categorySlug ? 'active' : ''}
-                onClick={() => setManualExpanded(new Set())}
+                onClick={() => setExpandedIds(new Set())}
               >
                 Все товары
               </Link>
             </li>
             {mainCategories.map((cat) => {
+              const catSubs = getSubcategories(cat.id);
+              const hasChildren = catSubs.length > 0;
               const isExpanded = expandedIds.has(cat.id);
               const isActive =
                 categorySlug === cat.slug || isCategoryUnderRoot(categories, category, cat.id);
@@ -138,18 +138,27 @@ export function Catalog() {
                 <li key={cat.id} className={isExpanded ? 'cat-item-expanded' : ''}>
                   <Link
                     to={`/catalog/${cat.slug}`}
-                    className={isActive ? 'active' : ''}
-                    onClick={() => toggleExpand(cat.id)}
+                    className={`cat-link ${isActive ? 'active' : ''}`}
+                    aria-expanded={hasChildren ? isExpanded : undefined}
+                    onClick={() => {
+                      if (hasChildren) toggleExpand(cat.id);
+                    }}
                   >
-                    {cat.icon} {cat.name}
+                    {hasChildren && (
+                      <span className="cat-chevron" aria-hidden>
+                        {isExpanded ? '▼' : '▶'}
+                      </span>
+                    )}
+                    <span className="cat-label">
+                      {cat.icon} {cat.name}
+                    </span>
                   </Link>
-                  {isExpanded && (
+                  {isExpanded && hasChildren && (
                     <CatalogCategoryBranch
                       parentId={cat.id}
                       depth={0}
                       categorySlug={categorySlug}
                       expandedIds={expandedIds}
-                      rootId={cat.id}
                       getSubcategories={getSubcategories}
                       onToggleExpand={toggleExpand}
                     />

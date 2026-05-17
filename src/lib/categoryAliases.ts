@@ -11,6 +11,7 @@ export const CATEGORY_NAME_ALIASES: Record<string, string> = {
   'Ремкомплект': 'Ремкомплект уплотнительные кольца для насосов',
   'Конвекторчые батареи': 'Конвекторные батареи',
   'Инфракрасные панели': 'Инфракрасные обогреватели',
+  'Компрессионные фитинги': 'Компрессионные муфты',
 };
 
 export function resolveCanonicalCategoryName(name: string): string {

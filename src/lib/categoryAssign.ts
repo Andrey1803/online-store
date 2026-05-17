@@ -15,7 +15,35 @@ import {
   SUBCATEGORY_PARENT,
 } from './categoryHierarchy';
 import { parseConnectionType } from './productSpecs';
-import { collectCategoryTreeIds } from './catalog';
+import { collectCategoryTreeIds, getRootCategoryId } from './catalog';
+
+const COMPRESSION_CATEGORY = 'Компрессионные муфты';
+
+function isCompressionProduct(
+  productName: string,
+  description = '',
+  categoryName?: string,
+): boolean {
+  const text = `${productName} ${description}`.toLowerCase();
+  if (/компрессион/.test(text)) return true;
+  if (categoryName && /компрессион/.test(categoryName)) return true;
+  if (
+    /\b(муфт|фитинг|тройник|угольник|отвод|заглушк|переход|соединител)\b/.test(text) &&
+    /\b(пэ|пнд|pnd|полиэтилен|poelsan)\b/.test(text) &&
+    !/ppr|ппр|полипропилен|unidelta|valtec|meerplast/i.test(text)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isInCategoryTree(categories: Category[], categoryId: string, rootId: string): boolean {
+  try {
+    return getRootCategoryId(categories, categoryId) === rootId;
+  } catch {
+    return false;
+  }
+}
 
 const ROOT_IDS = new Set(
   defaultCategories.filter((c) => !c.parentId).map((c) => c.id),
@@ -38,7 +66,17 @@ export function inferCategoryFromProduct(
   const n = productName.toLowerCase();
   const combined = `${productName} ${description}`.toLowerCase();
 
+  if (/компрессионн/.test(n) || /компрессионн/.test(combined)) {
+    return COMPRESSION_CATEGORY;
+  }
+
   if (/\bпэ\b|полиэтилен|пнд|пвд|pe\s*100|pe-100/.test(n)) {
+    if (/^труба\b/.test(n) || (/\bтруб/.test(n) && !/муфт|фитинг|тройник/.test(n))) {
+      return 'Труба питьевая';
+    }
+    if (/муфт|фитинг|тройник|угольник|отвод|заглушк|переход/.test(n)) {
+      return COMPRESSION_CATEGORY;
+    }
     return 'Труба питьевая';
   }
   if (/ppr|ппр|полипропиленов/.test(n)) {
@@ -48,7 +86,9 @@ export function inferCategoryFromProduct(
     return 'Комплектующие';
   }
   if (/фитинг|муфта|тройник|угольник|кран|вентил/.test(n) && sheetName === 'Полипропилен') {
-    if (/пэ|полиэтилен/.test(n)) return 'Труба питьевая';
+    if (/пэ|полиэтилен|poelsan/.test(n) && !/ppr|ппр|полипропилен/.test(n)) {
+      return COMPRESSION_CATEGORY;
+    }
     return 'Полипропиленовые фитинги';
   }
   if (/^труба\b/.test(n) && sheetName === 'Полипропилен') {
@@ -232,6 +272,17 @@ export function repairProductCategories(
     const sectionName = isParentSheet(current.name) ? current.name : undefined;
     let targetName = current.name;
 
+    // Компрессионные из раздела полипропилен → комплектующие
+    if (isInCategoryTree([...categoryStore.values()], p.categoryId, 'polipropilen')) {
+      if (
+        isCompressionProduct(p.name, p.description, current.name) ||
+        /компрессион/i.test(current.name)
+      ) {
+        const newId = ensureCat(COMPRESSION_CATEGORY, 'Комплектующие');
+        if (newId !== p.categoryId) return { ...p, categoryId: newId };
+      }
+    }
+
     // Листовая подкатегория с parentId — оставляем как в прайсе
     if (current.parentId && !isParentSheet(current.name) && current.name !== 'Комплектующие') {
       return p;
@@ -258,11 +309,16 @@ export function repairProductCategories(
     return newId !== p.categoryId ? { ...p, categoryId: newId } : p;
   });
 
-  const allCategories = repairCategoryTree([...categoryStore.values()]);
+  const reparentedCategories = repairCategoryTree([...categoryStore.values()]).map((cat) => {
+    if (/компрессион/i.test(cat.name) && cat.parentId === 'polipropilen') {
+      return { ...cat, parentId: 'komplektuyushchie' };
+    }
+    return cat;
+  });
 
   return {
     products: repairedProducts,
-    categories: pruneEmptyCategories(allCategories, repairedProducts),
+    categories: pruneEmptyCategories(reparentedCategories, repairedProducts),
   };
 }
 
