@@ -10,6 +10,7 @@ import {
   type CategoryMap,
 } from './categoryEnsure';
 import {
+  COMPRESSION_NESTED_PARENT,
   NESTED_SUBCATEGORY_PARENT,
   resolveParentId,
   SHEET_TO_PARENT,
@@ -19,17 +20,27 @@ import { parseConnectionType } from './productSpecs';
 import { collectCategoryTreeIds, getRootCategoryId } from './catalog';
 
 const COMPRESSION_CATEGORY = 'Компрессионные муфты';
+const HOSE_COUPLING_CATEGORY = 'Муфта комбинированная для шлангов рукавов';
 const COMBINED_FITTINGS = 'Комбинированные фитинги';
 
-/** Подтип комбинированных фитингов PPR по названию товара */
+/** Муфта/соединение для шланга (ПЭ, компрессионные) — не PPR */
+function isHoseCouplingProduct(productName: string, description = ''): boolean {
+  const text = `${productName} ${description}`.toLowerCase();
+  if (/муфт/.test(text) && /шланг|рукав/.test(text)) return true;
+  if (/соединител/.test(text) && /шланг/.test(text)) return true;
+  if (/быстросъем/.test(text) && /шланг|насос/.test(text)) return true;
+  if (/головка\s+г[цм]-/.test(text)) return true;
+  return false;
+}
+
+/** Подтип комбинированных фитингов PPR (только латунь + PPR) */
 function inferCombinedFittingSubType(productName: string): string | undefined {
+  if (isHoseCouplingProduct(productName)) return undefined;
+
   const n = productName.toLowerCase();
   if (/тройник/.test(n)) return 'Тройники комбинированные с НР';
   if (/муфт/.test(n) && /разъем/.test(n)) return 'Муфты разъемные с НР';
   if (/муфт/.test(n) && /соединител/.test(n)) return 'Муфты соединительные';
-  if (/муфт/.test(n) && (/шланг|рукав/.test(n))) {
-    return 'Муфта комбинированная для шлангов рукавов';
-  }
   if (/муфт/.test(n)) return 'Муфты комбинированные с НР';
   return undefined;
 }
@@ -39,6 +50,9 @@ function isCompressionProduct(
   description = '',
   categoryName?: string,
 ): boolean {
+  if (isHoseCouplingProduct(productName, description)) return true;
+  if (categoryName === HOSE_COUPLING_CATEGORY) return true;
+
   const text = `${productName} ${description}`.toLowerCase();
   if (/компрессион/.test(text)) return true;
   if (categoryName && /компрессион/.test(categoryName)) return true;
@@ -196,6 +210,13 @@ export function resolveProductCategoryName(
   }
 
   if (type && (SUBCATEGORY_PARENT[type] || NESTED_SUBCATEGORY_PARENT[type])) return type;
+  if (type && COMPRESSION_NESTED_PARENT[type]) return type;
+  if (type === 'Муфта комбинированная') {
+    if (sheet === 'Комплектующие' || isHoseCouplingProduct(productName, description)) {
+      return HOSE_COUPLING_CATEGORY;
+    }
+    if (sheet === 'Полипропилен') return 'Муфты комбинированные с НР';
+  }
   if (type) return type;
   return sheet || 'Прочее';
 }
@@ -204,6 +225,12 @@ function resolveParentCategoryId(
   cat: Category,
   byName: Map<string, Category>,
 ): string | undefined {
+  const compressionNestedName = COMPRESSION_NESTED_PARENT[cat.name.trim()];
+  if (compressionNestedName) {
+    const parentCat = byName.get(compressionNestedName.toLowerCase());
+    if (parentCat) return parentCat.id;
+  }
+
   const nestedParentName = NESTED_SUBCATEGORY_PARENT[cat.name.trim()];
   if (nestedParentName) {
     const parentCat = byName.get(nestedParentName.toLowerCase());
@@ -307,13 +334,20 @@ export function repairProductCategories(
     const sectionName = isParentSheet(current.name) ? current.name : undefined;
     let targetName = current.name;
 
-    // Компрессионные из раздела полипропилен → комплектующие
+    // Компрессионные и муфты для шлангов — не в полипропилен
     if (isInCategoryTree([...categoryStore.values()], p.categoryId, 'polipropilen')) {
+      if (isCompressionProduct(p.name, p.description, current.name) || /компрессион/i.test(current.name)) {
+        const target = isHoseCouplingProduct(p.name, p.description)
+          ? HOSE_COUPLING_CATEGORY
+          : COMPRESSION_CATEGORY;
+        const newId = ensureCat(target, 'Комплектующие');
+        if (newId !== p.categoryId) return { ...p, categoryId: newId };
+      }
       if (
-        isCompressionProduct(p.name, p.description, current.name) ||
-        /компрессион/i.test(current.name)
+        current.name === HOSE_COUPLING_CATEGORY ||
+        current.id === 'mufta-kombinirovannaya-dlya-shlangov-rukavov'
       ) {
-        const newId = ensureCat(COMPRESSION_CATEGORY, 'Комплектующие');
+        const newId = ensureCat(HOSE_COUPLING_CATEGORY, 'Комплектующие');
         if (newId !== p.categoryId) return { ...p, categoryId: newId };
       }
     }
@@ -361,6 +395,13 @@ export function repairProductCategories(
   const reparentedCategories = repairCategoryTree([...categoryStore.values()]).map((cat) => {
     if (/компрессион/i.test(cat.name) && cat.parentId === 'polipropilen') {
       return { ...cat, parentId: 'komplektuyushchie' };
+    }
+    if (
+      (cat.name === HOSE_COUPLING_CATEGORY || cat.id === 'mufta-kombinirovannaya-dlya-shlangov-rukavov') &&
+      getRootCategoryId([...categoryStore.values()], cat.id) === 'polipropilen'
+    ) {
+      const compression = [...categoryStore.values()].find((c) => c.name === COMPRESSION_CATEGORY);
+      return { ...cat, parentId: compression?.id ?? 'komplektuyushchie' };
     }
     return cat;
   });

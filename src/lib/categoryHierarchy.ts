@@ -6,8 +6,11 @@ export const NESTED_SUBCATEGORY_PARENT: Record<string, string> = {
   'Муфты комбинированные с НР': 'Комбинированные фитинги',
   'Муфты соединительные': 'Комбинированные фитинги',
   'Муфты разъемные с НР': 'Комбинированные фитинги',
-  'Муфта комбинированная': 'Комбинированные фитинги',
-  'Муфта комбинированная для шлангов рукавов': 'Комбинированные фитинги',
+};
+
+/** Компрессионные / для шлангов — в комплектующие, не в PPR */
+export const COMPRESSION_NESTED_PARENT: Record<string, string> = {
+  'Муфта комбинированная для шлангов рукавов': 'Компрессионные муфты',
 };
 
 export const SUBCATEGORY_PARENT: Record<string, string> = {
@@ -105,6 +108,8 @@ export const SUBCATEGORY_PARENT: Record<string, string> = {
   'Компрессионные муфты': 'komplektuyushchie',
 
   'Компрессионные фитинги': 'komplektuyushchie',
+
+  'Муфта комбинированная для шлангов рукавов': 'komplektuyushchie',
 
   'Краны': 'komplektuyushchie',
 
@@ -337,6 +342,11 @@ function resolveParentIdHeuristic(categoryName: string): string | undefined {
 export function resolveParentId(categoryName: string, sheetName?: string): string | undefined {
 
   const trimmed = categoryName.trim();
+
+  if (COMPRESSION_NESTED_PARENT[trimmed]) {
+    const parentName = COMPRESSION_NESTED_PARENT[trimmed];
+    if (SUBCATEGORY_PARENT[parentName]) return SUBCATEGORY_PARENT[parentName];
+  }
 
   if (NESTED_SUBCATEGORY_PARENT[trimmed]) {
     const parentName = NESTED_SUBCATEGORY_PARENT[trimmed];

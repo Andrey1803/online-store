@@ -3,6 +3,7 @@ import { defaultCategories } from '../data/categories';
 import { slugify } from './catalog';
 import { resolveCanonicalCategoryName } from './categoryAliases';
 import {
+  COMPRESSION_NESTED_PARENT,
   NESTED_SUBCATEGORY_PARENT,
   SHEET_TO_PARENT,
   resolveParentId,
@@ -25,6 +26,11 @@ export function resolveCategoryParentRef(
   sheetName?: string,
 ): CategoryParentRef | undefined {
   const name = resolveCanonicalCategoryName(categoryName.trim());
+
+  const compressionNested = COMPRESSION_NESTED_PARENT[name];
+  if (compressionNested) {
+    return { kind: 'category', parentName: compressionNested };
+  }
 
   const nestedParent = NESTED_SUBCATEGORY_PARENT[name];
   if (nestedParent) {
