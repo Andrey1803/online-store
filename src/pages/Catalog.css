@@ -58,8 +58,11 @@
 }
 
 .cat-list a.sub {
-  padding-left: 1.25rem;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+}
+
+.cat-sublist .cat-sublist a.sub {
+  font-size: 0.78rem;
 }
 
 .catalog-header {

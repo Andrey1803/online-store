@@ -94,6 +94,18 @@ export function getSubcategories(categories: Category[], parentId: string): Cate
     .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 }
 
+/** Глубина категории: 0 = корень, 1 = подкатегория, … */
+export function getCategoryDepth(categories: Category[], categoryId: string): number {
+  const byId = new Map(categories.map((c) => [c.id, c]));
+  let depth = 0;
+  let cur = byId.get(categoryId);
+  while (cur?.parentId && depth < 20) {
+    depth++;
+    cur = byId.get(cur.parentId);
+  }
+  return depth;
+}
+
 export function getProductBySlug(products: Product[], slug: string): Product | undefined {
   return products.find((p) => p.slug === slug);
 }

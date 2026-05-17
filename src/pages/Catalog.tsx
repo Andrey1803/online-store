@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Category } from '../data/categories';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  CatalogCategoryBranch,
+  isCategoryUnderRoot,
+} from '../components/CatalogCategoryTree';
 import { ProductCard } from '../components/ProductCard';
 import { CatalogFilter, DEFAULT_FILTERS } from '../components/CatalogFilter';
 import { useStore } from '../context/StoreContext';
@@ -18,7 +23,9 @@ export function Catalog() {
   const {
     products,
     mainCategories,
+    categories,
     getCategoryBySlug,
+    getCategoryById,
     getSubcategories,
     getProductsByCategory,
   } = useStore();
@@ -30,16 +37,33 @@ export function Catalog() {
 
   const category = categorySlug ? getCategoryBySlug(categorySlug) : undefined;
 
-  const expandedParentFromUrl = useMemo(() => {
-    if (!category) return null;
-    return category.parentId ?? category.id;
-  }, [category]);
+  const expandedFromUrl = useMemo(() => {
+    const ids = new Set<string>();
+    if (!category) return ids;
+    let cur: Category | undefined = category;
+    ids.add(cur.id);
+    while (cur?.parentId) {
+      ids.add(cur.parentId);
+      cur = getCategoryById(cur.parentId);
+    }
+    return ids;
+  }, [category, getCategoryById]);
 
-  const [expandedParentId, setExpandedParentId] = useState<string | null>(null);
+  const [manualExpanded, setManualExpanded] = useState<Set<string>>(() => new Set());
 
-  useEffect(() => {
-    setExpandedParentId(expandedParentFromUrl);
-  }, [expandedParentFromUrl]);
+  const expandedIds = useMemo(
+    () => new Set([...expandedFromUrl, ...manualExpanded]),
+    [expandedFromUrl, manualExpanded],
+  );
+
+  const toggleExpand = useCallback((id: string) => {
+    setManualExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   const filters = useMemo(
     () => parseFiltersFromParams(searchParams),
@@ -100,43 +124,35 @@ export function Catalog() {
               <Link
                 to="/catalog"
                 className={!categorySlug ? 'active' : ''}
-                onClick={() => setExpandedParentId(null)}
+                onClick={() => setManualExpanded(new Set())}
               >
                 Все товары
               </Link>
             </li>
             {mainCategories.map((cat) => {
-              const catSubs = getSubcategories(cat.id);
-              const isExpanded = expandedParentId === cat.id;
+              const isExpanded = expandedIds.has(cat.id);
+              const isActive =
+                categorySlug === cat.slug || isCategoryUnderRoot(categories, category, cat.id);
 
               return (
                 <li key={cat.id} className={isExpanded ? 'cat-item-expanded' : ''}>
                   <Link
                     to={`/catalog/${cat.slug}`}
-                    className={
-                      categorySlug === cat.slug ||
-                      catSubs.some((s) => s.slug === categorySlug)
-                        ? 'active'
-                        : ''
-                    }
-                    onClick={() => setExpandedParentId(cat.id)}
+                    className={isActive ? 'active' : ''}
+                    onClick={() => toggleExpand(cat.id)}
                   >
                     {cat.icon} {cat.name}
                   </Link>
-                  {isExpanded && catSubs.length > 0 && (
-                    <ul className="cat-sublist">
-                      {catSubs.map((sub) => (
-                        <li key={sub.id}>
-                          <Link
-                            to={`/catalog/${sub.slug}`}
-                            className={`sub ${categorySlug === sub.slug ? 'active' : ''}`}
-                            onClick={() => setExpandedParentId(cat.id)}
-                          >
-                            {sub.name}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
+                  {isExpanded && (
+                    <CatalogCategoryBranch
+                      parentId={cat.id}
+                      depth={0}
+                      categorySlug={categorySlug}
+                      expandedIds={expandedIds}
+                      rootId={cat.id}
+                      getSubcategories={getSubcategories}
+                      onToggleExpand={toggleExpand}
+                    />
                   )}
                 </li>
               );

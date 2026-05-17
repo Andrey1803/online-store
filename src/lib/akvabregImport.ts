@@ -1,13 +1,10 @@
 import * as XLSX from 'xlsx';
 import type { Category } from '../data/categories';
-import { defaultCategories } from '../data/categories';
 import type { Product } from '../data/products';
-import { resolveCanonicalCategoryName } from './categoryAliases';
 import { slugify } from './catalog';
-import { SHEET_TO_PARENT } from './categoryHierarchy';
+import { upsertCategory, type CategoryMap } from './categoryEnsure';
 import { deduplicateProducts } from './productDedupe';
 import { parseSpecsFromText } from './productSpecs';
-import { resolveParentId } from './categoryHierarchy';
 import { resolveProductCategoryName } from './categoryAssign';
 import { extractAllSheetImages, imageForExcelRow, type SheetImageMap } from './xlsxImages';
 
@@ -110,52 +107,10 @@ function colorFromArticle(article: string): string {
   return COLORS[h]!;
 }
 
-function ensureCategory(
-  name: string,
-  categories: Map<string, Category>,
-  sheetName?: string,
-): string {
-  const trimmed = resolveCanonicalCategoryName(name.trim());
-  const mappedParent = resolveParentId(trimmed, sheetName);
-  if (mappedParent && !categories.has(mappedParent)) {
-    const parentCat = defaultCategoryById(mappedParent);
-    if (parentCat) categories.set(parentCat.id, parentCat);
-  }
-
-  // Лист прайса = корневой раздел (напр. «Автоматика для насосов» → id avtomatika)
-  if (mappedParent && SHEET_TO_PARENT[trimmed] === mappedParent) {
-    return mappedParent;
-  }
-
-  const slug = slugify(trimmed);
-  const existing = [...categories.values()].find(
-    (c) => c.slug === slug || c.name.toLowerCase() === trimmed.toLowerCase(),
-  );
-  if (existing) return existing.id;
-
-  let parentId: string | undefined = mappedParent;
-
-  let id = slug || `cat-${categories.size}`;
-  if (parentId && id === parentId) id = `${id}-cat`;
-  categories.set(id, {
-    id,
-    slug: slug || id,
-    name: trimmed,
-    description: '',
-    icon: '📦',
-    parentId,
-  });
-  return id;
-}
-
-function defaultCategoryById(id: string): Category | undefined {
-  return defaultCategories.find((c) => c.id === id);
-}
-
 function parseSheet(
   rows: unknown[][],
   sheetName: string,
-  categories: Map<string, Category>,
+  categories: CategoryMap,
   options: ImportOptions,
   stats: ImportStats,
   imageByRow?: SheetImageMap,
@@ -198,7 +153,7 @@ function parseSheet(
     const typeName = String(get('type') ?? '').trim();
     const description = String(get('desc') ?? '').trim() || name;
     const categoryName = resolveProductCategoryName(name, typeName, sheetName, description);
-    const categoryId = ensureCategory(categoryName, categories, sheetName);
+    const categoryId = upsertCategory(categoryName, categories, sheetName);
 
     let slug = slugify(name);
     if (usedSlugs.has(slug)) slug = `${slug}-${article.slice(-6)}`;
@@ -245,7 +200,7 @@ export async function parseAkvabregFile(
   onProgress?: (message: string) => void,
 ): Promise<ImportResult> {
   const workbook = XLSX.read(buffer, { type: 'array' });
-  const categories = new Map<string, Category>(existingCategories.map((c) => [c.id, c]));
+  const categories: CategoryMap = new Map(existingCategories.map((c) => [c.id, c]));
   const initialSize = categories.size;
   const allProducts: Product[] = [];
   const stats: ImportStats = {
@@ -287,7 +242,8 @@ export async function parseAkvabregFile(
 
   stats.newCategories = categories.size - initialSize;
 
-  const products = deduplicateProducts(allProducts);
+  const categoryList = [...categories.values()];
+  const products = deduplicateProducts(allProducts, categoryList);
   stats.imported = products.length;
 
   return {

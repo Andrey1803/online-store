@@ -1,9 +1,19 @@
 import type { Category } from '../data/categories';
 import { defaultCategories } from '../data/categories';
 import type { Product } from '../data/products';
-import { slugify } from './catalog';
 import { resolveCanonicalCategoryName } from './categoryAliases';
-import { resolveParentId, SHEET_TO_PARENT, SUBCATEGORY_PARENT } from './categoryHierarchy';
+import {
+  mergeDefaultCategoryIds,
+  remapProductCategoryIds,
+  upsertCategory,
+  type CategoryMap,
+} from './categoryEnsure';
+import {
+  NESTED_SUBCATEGORY_PARENT,
+  resolveParentId,
+  SHEET_TO_PARENT,
+  SUBCATEGORY_PARENT,
+} from './categoryHierarchy';
 import { parseConnectionType } from './productSpecs';
 import { collectCategoryTreeIds } from './catalog';
 
@@ -44,6 +54,29 @@ export function inferCategoryFromProduct(
   if (/^труба\b/.test(n) && sheetName === 'Полипропилен') {
     if (/пэ|полиэтилен/.test(n)) return 'Труба питьевая';
     return 'Полипропиленовые трубы';
+  }
+
+  if (sheetName === 'Автоматика для насосов') {
+    if (/частот|преобразовател|инвертор|vfd/i.test(n)) return 'Частотные блоки управления';
+    if (/механическ|реле давления|минимальн.*давлен/i.test(n)) {
+      return 'Механические блоки управления';
+    }
+    if (/готов.*систем|комплект.*автомат|станц/i.test(n)) {
+      return 'Готовые системы автоматики';
+    }
+    if (/блок|управлен|контроллер|электрон|реле/i.test(n)) {
+      return 'Электронные блоки управления';
+    }
+  }
+
+  if (sheetName === 'Запасные части') {
+    if (/двигател|мотор/.test(n)) return 'Двигатели для насосов';
+    if (/крыльчатк/.test(n)) return 'Крыльчатки для насосов';
+    if (/сальник/.test(n)) return 'Сальники для насосов';
+    if (/ротор|статор/.test(n)) return 'Статора и роторы';
+    if (/ремкомплект|уплотнит.*кольц/.test(n)) return 'Ремкомплект';
+    if (/диффузор/.test(n)) return 'Диффузоры для насоса';
+    if (/измельчител/.test(n)) return 'Измельчители';
   }
 
   if (sheetName === 'Комплектующие') {
@@ -98,14 +131,16 @@ export function resolveProductCategoryName(
   }
 
   if (isParentSheet(sheet)) {
-    if (type && type !== sheet && SUBCATEGORY_PARENT[type]) return type;
+    if (type && type !== sheet && (SUBCATEGORY_PARENT[type] || NESTED_SUBCATEGORY_PARENT[type])) {
+      return type;
+    }
     if (type && type !== sheet && !isParentSheet(type)) return type;
     const inferred = inferCategoryFromProduct(productName, sheet, description);
     if (inferred) return inferred;
     return sheet;
   }
 
-  if (type && SUBCATEGORY_PARENT[type]) return type;
+  if (type && (SUBCATEGORY_PARENT[type] || NESTED_SUBCATEGORY_PARENT[type])) return type;
   if (type) return type;
   return sheet || 'Прочее';
 }
@@ -142,7 +177,8 @@ export function repairCategoryTree(categories: Category[]): Category[] {
     }
 
     const mapped = resolveParentId(cat.name);
-    let parentId = mapped ?? cat.parentId;
+    let parentId = cat.parentId ?? mapped;
+    if (!parentId && mapped) parentId = mapped;
     if (parentId && !byId.has(parentId)) {
       parentId = mapped ?? undefined;
     }
@@ -159,43 +195,28 @@ export function repairProductCategories(
   products: Product[],
   categories: Category[],
 ): { products: Product[]; categories: Category[] } {
-  const catMap = new Map(categories.map((c) => [c.id, c]));
-  const catBySlug = new Map(categories.map((c) => [c.slug, c]));
-  const catByName = new Map(categories.map((c) => [c.name.toLowerCase(), c]));
-  const extraCats = new Map<string, Category>();
+  const mergedDefaults = mergeDefaultCategoryIds(categories);
+  const idRemap = mergedDefaults.idRemap;
+  const workingProducts = products.map((p) => ({ ...p }));
+  remapProductCategoryIds(workingProducts, idRemap);
 
-  const ensureCat = (name: string, sheetHint?: string): string => {
-    const trimmed = resolveCanonicalCategoryName(name);
-    const slug = slugify(trimmed);
-    const existing = catBySlug.get(slug) ?? catByName.get(trimmed.toLowerCase());
-    if (existing) return existing.id;
+  const catMap = new Map(mergedDefaults.categories.map((c) => [c.id, c]));
+  const categoryStore: CategoryMap = new Map(mergedDefaults.categories.map((c) => [c.id, c]));
 
-    if (extraCats.has(slug)) return extraCats.get(slug)!.id;
+  const ensureCat = (name: string, sheetHint?: string): string =>
+    upsertCategory(name, categoryStore, sheetHint);
 
-    let parentId = resolveParentId(trimmed, sheetHint);
-    let id = slug || `cat-${extraCats.size}`;
-    if (parentId && id === parentId) id = `${id}-cat`;
-
-    const cat: Category = {
-      id,
-      slug: slug || id,
-      name: trimmed,
-      description: '',
-      icon: '📦',
-      parentId,
-    };
-    extraCats.set(slug, cat);
-    catBySlug.set(slug, cat);
-    catByName.set(trimmed.toLowerCase(), cat);
-    return id;
-  };
-
-  const repairedProducts = products.map((p) => {
-    const current = catMap.get(p.categoryId);
+  const repairedProducts = workingProducts.map((p) => {
+    const current = catMap.get(p.categoryId) ?? categoryStore.get(p.categoryId);
     if (!current) return p;
 
-    // Товары в корневом разделе (avtomatika, nasosy, …) — не разносить по эвристике
     if (ROOT_IDS.has(p.categoryId)) {
+      const sheet = isParentSheet(current.name) ? current.name : current.name;
+      const inferred = inferCategoryFromProduct(p.name, sheet, p.description);
+      if (inferred) {
+        const newId = ensureCat(inferred, sheet);
+        if (newId !== p.categoryId) return { ...p, categoryId: newId };
+      }
       return p;
     }
 
@@ -237,7 +258,7 @@ export function repairProductCategories(
     return newId !== p.categoryId ? { ...p, categoryId: newId } : p;
   });
 
-  const allCategories = repairCategoryTree([...categories, ...extraCats.values()]);
+  const allCategories = repairCategoryTree([...categoryStore.values()]);
 
   return {
     products: repairedProducts,

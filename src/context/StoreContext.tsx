@@ -26,9 +26,10 @@ function applyCatalogRepair(
     products,
     categories,
   );
+  const repairedCategories = repairCategoryTree(fixedCats);
   return {
-    products: deduplicateProducts(fixedProducts),
-    categories: repairCategoryTree(fixedCats),
+    products: deduplicateProducts(fixedProducts, repairedCategories),
+    categories: repairedCategories,
   };
 }
 
