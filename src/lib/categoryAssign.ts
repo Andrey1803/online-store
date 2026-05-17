@@ -5,6 +5,7 @@ import { resolveCanonicalCategoryName } from './categoryAliases';
 import {
   mergeDefaultCategoryIds,
   remapProductCategoryIds,
+  resolveCategoryParentRef,
   upsertCategory,
   type CategoryMap,
 } from './categoryEnsure';
@@ -18,6 +19,20 @@ import { parseConnectionType } from './productSpecs';
 import { collectCategoryTreeIds, getRootCategoryId } from './catalog';
 
 const COMPRESSION_CATEGORY = 'Компрессионные муфты';
+const COMBINED_FITTINGS = 'Комбинированные фитинги';
+
+/** Подтип комбинированных фитингов PPR по названию товара */
+function inferCombinedFittingSubType(productName: string): string | undefined {
+  const n = productName.toLowerCase();
+  if (/тройник/.test(n)) return 'Тройники комбинированные с НР';
+  if (/муфт/.test(n) && /разъем/.test(n)) return 'Муфты разъемные с НР';
+  if (/муфт/.test(n) && /соединител/.test(n)) return 'Муфты соединительные';
+  if (/муфт/.test(n) && (/шланг|рукав/.test(n))) {
+    return 'Муфта комбинированная для шлангов рукавов';
+  }
+  if (/муфт/.test(n)) return 'Муфты комбинированные с НР';
+  return undefined;
+}
 
 function isCompressionProduct(
   productName: string,
@@ -185,9 +200,30 @@ export function resolveProductCategoryName(
   return sheet || 'Прочее';
 }
 
-/** Подкатегории без parentId вешаем на корневой раздел */
+function resolveParentCategoryId(
+  cat: Category,
+  byName: Map<string, Category>,
+): string | undefined {
+  const nestedParentName = NESTED_SUBCATEGORY_PARENT[cat.name.trim()];
+  if (nestedParentName) {
+    const parentCat = byName.get(nestedParentName.toLowerCase());
+    if (parentCat) return parentCat.id;
+  }
+
+  const ref = resolveCategoryParentRef(cat.name);
+  if (ref?.kind === 'category') {
+    const parentCat = byName.get(ref.parentName.toLowerCase());
+    if (parentCat) return parentCat.id;
+  }
+  if (ref?.kind === 'root') return ref.rootId;
+
+  return resolveParentId(cat.name);
+}
+
+/** Подкатегории без parentId вешаем на родителя (с учётом вложенности) */
 export function foldCategoriesIntoRoots(categories: Category[]): Category[] {
   const byId = new Map(categories.map((c) => [c.id, c]));
+  const byName = new Map(categories.map((c) => [c.name.toLowerCase(), c]));
 
   return categories.map((cat) => {
     if (ROOT_IDS.has(cat.id)) {
@@ -198,7 +234,7 @@ export function foldCategoriesIntoRoots(categories: Category[]): Category[] {
       return cat;
     }
 
-    const parentId = resolveParentId(cat.name);
+    const parentId = resolveParentCategoryId(cat, byName);
     if (parentId && parentId !== cat.id) {
       return { ...cat, parentId };
     }
@@ -210,17 +246,16 @@ export function foldCategoriesIntoRoots(categories: Category[]): Category[] {
 export function repairCategoryTree(categories: Category[]): Category[] {
   const folded = foldCategoriesIntoRoots(categories);
   const byId = new Map(folded.map((c) => [c.id, c]));
+  const byName = new Map(folded.map((c) => [c.name.toLowerCase(), c]));
 
   return folded.map((cat) => {
     if (ROOT_IDS.has(cat.id)) {
       return cat.parentId ? { ...cat, parentId: undefined } : cat;
     }
 
-    const mapped = resolveParentId(cat.name);
-    let parentId = cat.parentId ?? mapped;
-    if (!parentId && mapped) parentId = mapped;
+    let parentId = resolveParentCategoryId(cat, byName) ?? cat.parentId;
     if (parentId && !byId.has(parentId)) {
-      parentId = mapped ?? undefined;
+      parentId = resolveParentId(cat.name) ?? undefined;
     }
     if (parentId === cat.id) parentId = undefined;
 
@@ -309,6 +344,20 @@ export function repairProductCategories(
     return newId !== p.categoryId ? { ...p, categoryId: newId } : p;
   });
 
+  let withNestedCombined = repairedProducts.map((p) => {
+    const cat = categoryStore.get(p.categoryId);
+    if (!cat) return p;
+    const inCombinedBucket =
+      cat.id === 'kombinirovannye-fitingi' || cat.name === COMBINED_FITTINGS;
+    if (!inCombinedBucket) return p;
+
+    const subType = inferCombinedFittingSubType(p.name);
+    if (!subType) return p;
+
+    const newId = ensureCat(subType, 'Полипропилен');
+    return newId !== p.categoryId ? { ...p, categoryId: newId } : p;
+  });
+
   const reparentedCategories = repairCategoryTree([...categoryStore.values()]).map((cat) => {
     if (/компрессион/i.test(cat.name) && cat.parentId === 'polipropilen') {
       return { ...cat, parentId: 'komplektuyushchie' };
@@ -317,8 +366,8 @@ export function repairProductCategories(
   });
 
   return {
-    products: repairedProducts,
-    categories: pruneEmptyCategories(reparentedCategories, repairedProducts),
+    products: withNestedCombined,
+    categories: pruneEmptyCategories(reparentedCategories, withNestedCombined),
   };
 }
 
