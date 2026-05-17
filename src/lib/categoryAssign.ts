@@ -2,8 +2,10 @@ import type { Category } from '../data/categories';
 import { defaultCategories } from '../data/categories';
 import type { Product } from '../data/products';
 import { slugify } from './catalog';
+import { resolveCanonicalCategoryName } from './categoryAliases';
 import { resolveParentId, SHEET_TO_PARENT, SUBCATEGORY_PARENT } from './categoryHierarchy';
 import { parseConnectionType } from './productSpecs';
+import { collectCategoryTreeIds } from './catalog';
 
 const ROOT_IDS = new Set(
   defaultCategories.filter((c) => !c.parentId).map((c) => c.id),
@@ -89,7 +91,7 @@ export function resolveProductCategoryName(
   description = '',
 ): string {
   const sheet = sheetName.trim();
-  const type = typeFromExcel.trim();
+  const type = resolveCanonicalCategoryName(typeFromExcel.trim());
 
   if (isSubcategorySheet(sheet)) {
     return sheet;
@@ -163,7 +165,7 @@ export function repairProductCategories(
   const extraCats = new Map<string, Category>();
 
   const ensureCat = (name: string, sheetHint?: string): string => {
-    const trimmed = name.trim();
+    const trimmed = resolveCanonicalCategoryName(name);
     const slug = slugify(trimmed);
     const existing = catBySlug.get(slug) ?? catByName.get(trimmed.toLowerCase());
     if (existing) return existing.id;
@@ -192,8 +194,27 @@ export function repairProductCategories(
     const current = catMap.get(p.categoryId);
     if (!current) return p;
 
+    // Товары в корневом разделе (avtomatika, nasosy, …) — не разносить по эвристике
+    if (ROOT_IDS.has(p.categoryId)) {
+      return p;
+    }
+
+    // Пустая «псевдо-подкатегория» с именем листа Excel → в корневой раздел
+    if (
+      current.parentId &&
+      ROOT_IDS.has(current.parentId) &&
+      SHEET_TO_PARENT[current.name.trim()] === current.parentId
+    ) {
+      return { ...p, categoryId: current.parentId };
+    }
+
     const sectionName = isParentSheet(current.name) ? current.name : undefined;
     let targetName = current.name;
+
+    // Листовая подкатегория с parentId — оставляем как в прайсе
+    if (current.parentId && !isParentSheet(current.name) && current.name !== 'Комплектующие') {
+      return p;
+    }
 
     if (isParentSheet(current.name) || current.name === 'Полипропилен') {
       const sheet = current.name === 'Полипропилен' ? 'Полипропилен' : current.name;
@@ -218,5 +239,24 @@ export function repairProductCategories(
 
   const allCategories = repairCategoryTree([...categories, ...extraCats.values()]);
 
-  return { products: repairedProducts, categories: allCategories };
+  return {
+    products: repairedProducts,
+    categories: pruneEmptyCategories(allCategories, repairedProducts),
+  };
+}
+
+/** Убрать пустые дубликаты подкатегорий (усечённые названия листов Excel) */
+export function pruneEmptyCategories(
+  categories: Category[],
+  products: Product[],
+): Category[] {
+  const hasProductsInTree = (catId: string): boolean => {
+    const ids = collectCategoryTreeIds(categories, catId);
+    return products.some((p) => ids.has(p.categoryId));
+  };
+
+  return categories.filter((c) => {
+    if (ROOT_IDS.has(c.id)) return true;
+    return hasProductsInTree(c.id);
+  });
 }

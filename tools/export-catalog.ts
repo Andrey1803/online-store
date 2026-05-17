@@ -5,7 +5,9 @@
 import { mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { repairProductCategories } from '../src/lib/categoryAssign';
 import { parseAkvabregFile } from '../src/lib/akvabregImport';
+import { defaultCategories } from '../src/data/categories';
 import { PRODUCT_IMAGES_PREFIX } from '../src/lib/serverCatalog';
 import type { Product } from '../src/data/products';
 
@@ -71,11 +73,13 @@ async function main() {
     products.push({ ...p, image });
   }
 
+  const repaired = repairProductCategories(products, result.categories ?? defaultCategories);
+
   const bundle = {
     version: 1,
     exportedAt: new Date().toISOString(),
-    products,
-    categories: result.categories,
+    products: repaired.products,
+    categories: repaired.categories,
   };
 
   await writeFile(join(OUT_DIR, 'store.json'), JSON.stringify(bundle), 'utf8');

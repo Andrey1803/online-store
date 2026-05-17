@@ -2,7 +2,9 @@ import * as XLSX from 'xlsx';
 import type { Category } from '../data/categories';
 import { defaultCategories } from '../data/categories';
 import type { Product } from '../data/products';
+import { resolveCanonicalCategoryName } from './categoryAliases';
 import { slugify } from './catalog';
+import { SHEET_TO_PARENT } from './categoryHierarchy';
 import { deduplicateProducts } from './productDedupe';
 import { parseSpecsFromText } from './productSpecs';
 import { resolveParentId } from './categoryHierarchy';
@@ -113,19 +115,25 @@ function ensureCategory(
   categories: Map<string, Category>,
   sheetName?: string,
 ): string {
-  const trimmed = name.trim();
+  const trimmed = resolveCanonicalCategoryName(name.trim());
+  const mappedParent = resolveParentId(trimmed, sheetName);
+  if (mappedParent && !categories.has(mappedParent)) {
+    const parentCat = defaultCategoryById(mappedParent);
+    if (parentCat) categories.set(parentCat.id, parentCat);
+  }
+
+  // Лист прайса = корневой раздел (напр. «Автоматика для насосов» → id avtomatika)
+  if (mappedParent && SHEET_TO_PARENT[trimmed] === mappedParent) {
+    return mappedParent;
+  }
+
   const slug = slugify(trimmed);
   const existing = [...categories.values()].find(
     (c) => c.slug === slug || c.name.toLowerCase() === trimmed.toLowerCase(),
   );
   if (existing) return existing.id;
 
-  const mappedParent = resolveParentId(trimmed, sheetName);
   let parentId: string | undefined = mappedParent;
-  if (mappedParent && !categories.has(mappedParent)) {
-    const parentCat = defaultCategoryById(mappedParent);
-    if (parentCat) categories.set(parentCat.id, parentCat);
-  }
 
   let id = slug || `cat-${categories.size}`;
   if (parentId && id === parentId) id = `${id}-cat`;

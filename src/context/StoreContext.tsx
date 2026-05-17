@@ -120,8 +120,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => save(KEYS.site, site), [site]);
 
   const mainCategories = useMemo(
-    () => catalog.getMainCategories(categories),
-    [categories],
+    () => catalog.getMainCategoriesWithProducts(categories, products),
+    [categories, products],
   );
 
   const getProductBySlug = useCallback(
@@ -149,8 +149,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [categories],
   );
   const getSubcategories = useCallback(
-    (parentId: string) => catalog.getSubcategories(categories, parentId),
-    [categories],
+    (parentId: string) => catalog.getSubcategoriesWithProducts(categories, products, parentId),
+    [categories, products],
   );
 
   const saveProduct = useCallback((product: Product) => {

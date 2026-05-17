@@ -8,18 +8,34 @@ export function getProductIdentityKey(p: Product): string {
   return `id:${p.id}`;
 }
 
+const GENERIC_ROOT_IDS = new Set(['komplektuyushchie', 'polipropilen']);
+
 function productRecordScore(p: Product): number {
   let score = 0;
   if (p.image) score += 20;
   if (p.article?.trim()) score += 5;
   if (p.description.length > 40) score += 2;
   score += Math.min(p.specs.length, 8);
+  if (p.categoryId && !GENERIC_ROOT_IDS.has(p.categoryId)) score += 3;
   return score;
+}
+
+function pickPrimaryRecord(a: Product, b: Product): Product {
+  const scoreA = productRecordScore(a);
+  const scoreB = productRecordScore(b);
+  if (scoreA !== scoreB) return scoreB > scoreA ? b : a;
+  if (a.categoryId !== b.categoryId) {
+    const aGeneric = GENERIC_ROOT_IDS.has(a.categoryId);
+    const bGeneric = GENERIC_ROOT_IDS.has(b.categoryId);
+    if (aGeneric && !bGeneric) return b;
+    if (bGeneric && !aGeneric) return a;
+  }
+  return b;
 }
 
 /** Объединить две записи одного товара, оставив более полную */
 export function mergeProductRecords(a: Product, b: Product): Product {
-  const primary = productRecordScore(b) > productRecordScore(a) ? b : a;
+  const primary = pickPrimaryRecord(a, b);
   const secondary = primary === a ? b : a;
   const article = primary.article?.trim() || secondary.article?.trim();
 
@@ -80,7 +96,7 @@ export function deduplicateProducts(products: Product[]): Product[] {
 
   const mergedBySlug = dedupePass(
     [...mergedByArticle, ...withoutArticle],
-    (p) => (p.slug?.trim() ? `slug:${p.slug}` : null),
+    (p) => (p.slug?.trim() ? `slug:${p.slug}:${p.categoryId}` : null),
   );
 
   const seenIds = new Set<string>();

@@ -20,6 +20,28 @@ export function getMainCategories(categories: Category[]): Category[] {
   return getRootCategories(categories);
 }
 
+/** Корневые разделы, в которых есть хотя бы один товар */
+export function getMainCategoriesWithProducts(
+  categories: Category[],
+  products: Product[],
+): Category[] {
+  return getRootCategories(categories).filter((root) => {
+    const ids = collectCategoryTreeIds(categories, root.id);
+    return products.some((p) => ids.has(p.categoryId));
+  });
+}
+
+export function getSubcategoriesWithProducts(
+  categories: Category[],
+  products: Product[],
+  parentId: string,
+): Category[] {
+  return getSubcategories(categories, parentId).filter((sub) => {
+    const ids = collectCategoryTreeIds(categories, sub.id);
+    return products.some((p) => ids.has(p.categoryId));
+  });
+}
+
 export function isRootCategoryId(id: string): boolean {
   return ROOT_CATEGORY_IDS.has(id);
 }
