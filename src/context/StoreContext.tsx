@@ -16,6 +16,7 @@ import * as catalog from '../lib/catalog';
 import { repairCategoryTree, repairProductCategories } from '../lib/categoryAssign';
 import { deduplicateProducts } from '../lib/productDedupe';
 import { toIdbImageRef } from '../lib/productImageStore';
+import { adjustAllProductPrices } from '../lib/priceAdjust';
 import { fetchServerCatalog } from '../lib/serverCatalog';
 
 function applyCatalogRepair(
@@ -77,6 +78,8 @@ interface StoreContextValue {
   ) => void;
   /** Убрать перечёркнутую «старую» цену у всех товаров */
   clearStrikethroughPrices: () => void;
+  /** Изменить price (и опционально oldPrice) у всех товаров на percent % */
+  adjustAllPricesByPercent: (percent: number, adjustOldPrice: boolean) => void;
   repairCatalog: () => void;
   /** Привязать idb:артикул к товарам после восстановления фото */
   applyProductImageRefs: (articles: string[]) => void;
@@ -231,6 +234,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const adjustAllPricesByPercent = useCallback((percent: number, adjustOldPrice: boolean) => {
+    setProducts((prev) => adjustAllProductPrices(prev, percent, adjustOldPrice));
+  }, []);
+
   const importCatalog = useCallback(
     (data: { products: Product[]; categories?: Category[] }, mode: 'replace' | 'merge') => {
       setCategories((prevCats) => {
@@ -280,6 +287,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       resetToDefaults,
       importCatalog,
       clearStrikethroughPrices,
+      adjustAllPricesByPercent,
       repairCatalog,
       applyProductImageRefs,
     }),
@@ -303,6 +311,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       resetToDefaults,
       importCatalog,
       clearStrikethroughPrices,
+      adjustAllPricesByPercent,
       repairCatalog,
       applyProductImageRefs,
     ],
