@@ -16,7 +16,7 @@ import * as catalog from '../lib/catalog';
 import { repairCategoryTree, repairProductCategories } from '../lib/categoryAssign';
 import { deduplicateProducts } from '../lib/productDedupe';
 import { toIdbImageRef } from '../lib/productImageStore';
-import { adjustAllProductPrices } from '../lib/priceAdjust';
+import { adjustAllProductPrices, adjustProductPrices } from '../lib/priceAdjust';
 import { fetchServerCatalog } from '../lib/serverCatalog';
 
 function applyCatalogRepair(
@@ -68,6 +68,7 @@ interface StoreContextValue {
   getSubcategories: (parentId: string) => Category[];
   saveProduct: (product: Product) => void;
   deleteProduct: (id: string) => void;
+  deleteProducts: (ids: string[]) => number;
   saveCategory: (category: Category) => void;
   deleteCategory: (id: string) => boolean;
   updateSite: (site: SiteConfig) => void;
@@ -78,8 +79,12 @@ interface StoreContextValue {
   ) => void;
   /** Убрать перечёркнутую «старую» цену у всех товаров */
   clearStrikethroughPrices: () => void;
-  /** Изменить price (и опционально oldPrice) у всех товаров на percent % */
-  adjustAllPricesByPercent: (percent: number, adjustOldPrice: boolean) => void;
+  /** Изменить price (и опционально oldPrice) на percent %; productIds — только выбранные */
+  adjustAllPricesByPercent: (
+    percent: number,
+    adjustOldPrice: boolean,
+    productIds?: string[],
+  ) => void;
   repairCatalog: () => void;
   /** Привязать idb:артикул к товарам после восстановления фото */
   applyProductImageRefs: (articles: string[]) => void;
@@ -170,6 +175,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setProducts((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
+  const deleteProducts = useCallback((ids: string[]): number => {
+    if (!ids.length) return 0;
+    const remove = new Set(ids);
+    let removed = 0;
+    setProducts((prev) =>
+      prev.filter((p) => {
+        if (remove.has(p.id)) {
+          removed++;
+          return false;
+        }
+        return true;
+      }),
+    );
+    return removed;
+  }, []);
+
   const saveCategory = useCallback((category: Category) => {
     setCategories((prev) => {
       const i = prev.findIndex((c) => c.id === category.id);
@@ -234,9 +255,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const adjustAllPricesByPercent = useCallback((percent: number, adjustOldPrice: boolean) => {
-    setProducts((prev) => adjustAllProductPrices(prev, percent, adjustOldPrice));
-  }, []);
+  const adjustAllPricesByPercent = useCallback(
+    (percent: number, adjustOldPrice: boolean, productIds?: string[]) => {
+      const idSet = productIds?.length ? new Set(productIds) : null;
+      if (!idSet) {
+        setProducts((prev) => adjustAllProductPrices(prev, percent, adjustOldPrice));
+        return;
+      }
+      setProducts((prev) =>
+        prev.map((p) => (idSet.has(p.id) ? adjustProductPrices(p, percent, adjustOldPrice) : p)),
+      );
+    },
+    [],
+  );
 
   const importCatalog = useCallback(
     (data: { products: Product[]; categories?: Category[] }, mode: 'replace' | 'merge') => {
@@ -281,6 +312,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       getSubcategories,
       saveProduct,
       deleteProduct,
+      deleteProducts,
       saveCategory,
       deleteCategory,
       updateSite,
@@ -305,6 +337,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       getSubcategories,
       saveProduct,
       deleteProduct,
+      deleteProducts,
       saveCategory,
       deleteCategory,
       updateSite,
