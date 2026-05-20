@@ -164,8 +164,14 @@ p {
 }
 
 .contact-big {
+  display: inline-block;
   font-size: 1.5rem;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.company-requisites dd a[href^='tel:'] {
+  white-space: nowrap;
 }
 
 .contacts-note {
