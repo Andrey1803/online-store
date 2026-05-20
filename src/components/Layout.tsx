@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { useStore } from '../context/StoreContext';
@@ -7,12 +8,22 @@ import { SiteNotice } from './SiteNotice';
 import { CompanyRequisites } from './CompanyRequisites';
 import './Layout.css';
 
+type BuildInfo = { sha: string; builtAt: string };
+
 export function Layout() {
   const { site } = useStore();
   const { totalCount } = useCart();
   const { user, isAuthenticated } = useCustomerAuth();
   const location = useLocation();
   const showBack = location.pathname !== '/';
+  const [buildInfo, setBuildInfo] = useState<BuildInfo | null>(null);
+
+  useEffect(() => {
+    fetch('/build-info.json', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: BuildInfo | null) => setBuildInfo(data))
+      .catch(() => setBuildInfo(null));
+  }, []);
 
   return (
     <div className="app">
@@ -88,7 +99,15 @@ export function Layout() {
           </div>
         </div>
         <CompanyRequisites compact />
-        <p className="footer-copy">© {new Date().getFullYear()} {site.name}. {site.markupNote}</p>
+        <p className="footer-copy">
+          © {new Date().getFullYear()} {site.name}. {site.markupNote}
+          {buildInfo && (
+            <span className="footer-build" title={buildInfo.builtAt}>
+              {' '}
+              · сборка {buildInfo.sha}
+            </span>
+          )}
+        </p>
       </footer>
     </div>
   );

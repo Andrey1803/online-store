@@ -42,11 +42,19 @@ const server = createServer(async (req, res) => {
       }
       data = await readFile(join(DIST, 'index.html'));
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.end(data);
       return;
     }
     res.setHeader('Content-Type', MIME[ext] || 'application/octet-stream');
-    res.setHeader('Cache-Control', ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable');
+    const isHtml = ext === '.html' || ext === '';
+    const isBuildInfo = rel === '/build-info.json';
+    res.setHeader(
+      'Cache-Control',
+      isHtml || isBuildInfo
+        ? 'no-cache, no-store, must-revalidate'
+        : 'public, max-age=31536000, immutable',
+    );
     res.end(data);
   } catch {
     res.statusCode = 500;
