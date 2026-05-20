@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { CatalogFilters, FilterFacets } from '../lib/catalogFilter';
 
@@ -331,7 +331,7 @@ export function CatalogFilter({
 
             <>
 
-              Цена, BYN
+              Цена, BYN (с НДС)
 
               {priceActive && <FilterBadge count={1} />}
 
@@ -343,11 +343,11 @@ export function CatalogFilter({
 
           <div className="smart-filter-prices">
 
-            <span>{formatPrice(priceMinVal)}</span>
+            <span>{formatPrice(priceMinVal, true)}</span>
 
             <span>—</span>
 
-            <span>{formatPrice(priceMaxVal)}</span>
+            <span>{formatPrice(priceMaxVal, true)}</span>
 
           </div>
 

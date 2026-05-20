@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
+import { ConsentField } from '../components/ConsentField';
 import './Account.css';
 
 type Tab = 'login' | 'register';
@@ -14,6 +15,7 @@ export function AccountAuth() {
   );
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registerConsent, setRegisterConsent] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({
@@ -46,6 +48,10 @@ export function AccountAuth() {
     setError('');
     if (registerForm.password !== registerForm.passwordConfirm) {
       setError('Пароли не совпадают');
+      return;
+    }
+    if (!registerConsent) {
+      setError('Необходимо согласие на обработку персональных данных');
       return;
     }
     setLoading(true);
@@ -179,8 +185,18 @@ export function AccountAuth() {
                 }
               />
             </label>
+            <ConsentField
+              id="register-consent"
+              variant="registration"
+              checked={registerConsent}
+              onChange={setRegisterConsent}
+            />
             {error && <p className="account-error">{error}</p>}
-            <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg"
+              disabled={loading || !registerConsent}
+            >
               {loading ? 'Регистрация…' : 'Зарегистрироваться'}
             </button>
           </form>

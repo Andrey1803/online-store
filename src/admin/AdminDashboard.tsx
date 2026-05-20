@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useOrders } from '../context/OrdersContext';
 import { listCustomerProfiles } from '../lib/customerStore';
 import { useStore } from '../context/StoreContext';

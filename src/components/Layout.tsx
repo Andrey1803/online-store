@@ -3,6 +3,8 @@ import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { useStore } from '../context/StoreContext';
 import { useCart } from '../context/CartContext';
 import { BackButton, getStoreBackFallback, getStoreBackLabel } from './BackButton';
+import { SiteNotice } from './SiteNotice';
+import { CompanyRequisites } from './CompanyRequisites';
 import './Layout.css';
 
 export function Layout() {
@@ -14,6 +16,7 @@ export function Layout() {
 
   return (
     <div className="app">
+      <SiteNotice />
       <header className="header">
         <div className="header-top">
           <span>{site.city}</span>
@@ -70,14 +73,21 @@ export function Layout() {
             <Link to="/catalog/komplektuyushchie">Комплектующие</Link>
           </div>
           <div>
+            <strong>Информация</strong>
+            <Link to="/about">О компании</Link>
+            <Link to="/delivery">Доставка и оплата</Link>
+            <Link to="/contacts">Контакты</Link>
+            <Link to="/terms">Условия заявки</Link>
+            <Link to="/returns">Возврат и гарантия</Link>
+            <Link to="/privacy">Персональные данные</Link>
+          </div>
+          <div>
             <strong>Контакты</strong>
             <a href={site.phoneHref}>{site.phone}</a>
             <a href={`mailto:${site.email}`}>{site.email}</a>
-            <Link to="/admin/login" className="footer-admin-link">
-              Вход для администратора
-            </Link>
           </div>
         </div>
+        <CompanyRequisites compact />
         <p className="footer-copy">© {new Date().getFullYear()} {site.name}. {site.markupNote}</p>
       </footer>
     </div>

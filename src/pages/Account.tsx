@@ -89,7 +89,7 @@ export function Account() {
                 <div className="account-order-item-head">
                   <div>
                     <strong>{formatOrderDate(order.createdAt)}</strong>
-                    <span> · {formatPrice(order.total)}</span>
+                    <span> · {formatPrice(order.total, true)}</span>
                   </div>
                   <span className={`account-order-status account-order-status--${order.status}`}>
                     {ORDER_STATUS_LABELS[order.status]}
@@ -98,7 +98,8 @@ export function Account() {
                 <ul className="account-order-lines">
                   {order.items.map((item) => (
                     <li key={`${item.productId}-${item.slug}`}>
-                      {item.name} × {item.quantity} — {formatPrice(item.price * item.quantity)}
+                      {item.name} × {item.quantity} —{' '}
+                      {formatPrice(item.price * item.quantity, true)}
                     </li>
                   ))}
                 </ul>

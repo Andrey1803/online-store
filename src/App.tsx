@@ -11,6 +11,10 @@ import { ProductPage } from './pages/ProductPage';
 import { Cart } from './pages/Cart';
 import { Delivery } from './pages/Delivery';
 import { Contacts } from './pages/Contacts';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { Terms } from './pages/Terms';
+import { Returns } from './pages/Returns';
+import { About } from './pages/About';
 import { AccountAuth } from './pages/AccountAuth';
 import { Account } from './pages/Account';
 import { AdminLayout } from './admin/AdminLayout';
@@ -41,6 +45,10 @@ function App() {
                 <Route path="cart" element={<Cart />} />
                 <Route path="delivery" element={<Delivery />} />
                 <Route path="contacts" element={<Contacts />} />
+                <Route path="about" element={<About />} />
+                <Route path="privacy" element={<PrivacyPolicy />} />
+                <Route path="terms" element={<Terms />} />
+                <Route path="returns" element={<Returns />} />
                 <Route path="account/login" element={<AccountAuth />} />
                 <Route path="account" element={<Account />} />
               </Route>

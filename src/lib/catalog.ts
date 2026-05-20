@@ -145,8 +145,9 @@ export function searchProducts(products: Product[], query: string): Product[] {
   );
 }
 
-export function formatPrice(price: number): string {
-  return `${price.toFixed(2).replace('.', ',')} BYN`;
+export function formatPrice(price: number, forStorefront = false): string {
+  const amount = `${price.toFixed(2).replace('.', ',')} BYN`;
+  return forStorefront ? `${amount} с НДС` : amount;
 }
 
 export function slugify(text: string): string {

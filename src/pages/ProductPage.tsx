@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { formatPrice } from '../lib/catalog';
+import { COMPANY } from '../data/company';
 import { recordProductView } from '../lib/productActivity';
 import { getProductSpecs } from '../lib/productSpecs';
 import { useStore } from '../context/StoreContext';
@@ -71,11 +72,14 @@ export function ProductPage() {
           <span className="product-brand">{product.brand}</span>
           <h1>{product.name}</h1>
           <div className="product-detail-prices">
-            <span className="price-current">{formatPrice(product.price)}</span>
+            <span className="price-current">{formatPrice(product.price, true)}</span>
             {product.oldPrice && (
-              <span className="price-old">{formatPrice(product.oldPrice)}</span>
+              <span className="price-old">{formatPrice(product.oldPrice, true)}</span>
             )}
           </div>
+          {COMPANY.vatPayer && (
+            <p className="price-vat-hint">Цена включает НДС {COMPANY.vatRate}%</p>
+          )}
           <p className={`stock ${product.inStock ? 'in' : 'out'}`}>
             {product.inStock ? '✓ В наличии' : 'Под заказ — уточняйте срок'}
           </p>

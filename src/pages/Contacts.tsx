@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { CompanyRequisites } from '../components/CompanyRequisites';
 import { useStore } from '../context/StoreContext';
 
 export function Contacts() {
@@ -23,6 +25,17 @@ export function Contacts() {
           <p>{site.city}</p>
         </div>
       </div>
+
+      <section>
+        <h2>Реквизиты продавца</h2>
+        <CompanyRequisites />
+      </section>
+
+      <p className="contacts-note">
+        Оформление заявки на сайте не является заключением договора до подтверждения менеджером. См.{' '}
+        <Link to="/terms">условия оформления заявки</Link> и{' '}
+        <Link to="/privacy">политику обработки персональных данных</Link>.
+      </p>
     </div>
   );
 }

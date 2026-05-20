@@ -44,9 +44,9 @@ export function ProductCard({
           </>
         )}
         <div className="product-prices">
-          <span className="price-current">{formatPrice(product.price)}</span>
+          <span className="price-current">{formatPrice(product.price, true)}</span>
           {product.oldPrice && (
-            <span className="price-old">{formatPrice(product.oldPrice)}</span>
+            <span className="price-old">{formatPrice(product.oldPrice, true)}</span>
           )}
         </div>
         {cardSpecs.length > 0 && (

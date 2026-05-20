@@ -146,7 +146,7 @@ export function AdminProductForm() {
             </select>
           </label>
           <label>
-            Цена (BYN) *
+            Цена (BYN, с НДС) *
             <input
               type="number"
               min={0}

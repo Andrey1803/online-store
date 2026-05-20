@@ -1,3 +1,5 @@
+import { VAT_PRICE_NOTE } from './data/company';
+
 export interface SiteConfig {
   name: string;
   tagline: string;
@@ -15,9 +17,9 @@ export const DEFAULT_SITE: SiteConfig = {
   tagline: 'Насосы и водоснабжение',
   phone: '+375 (29) 147-21-08',
   phoneHref: 'tel:+375291472108',
-  email: 'info@akvasnab.by',
+  email: '1472108@mail.ru',
   city: 'Минск и область',
-  markupNote: 'Цены ориентировочные — уточняйте при заказе',
+  markupNote: VAT_PRICE_NOTE,
   heroTitle: 'Насосы и водоснабжение под ключ',
   heroText:
     'Скважинные и дренажные насосы, станции, гидроаккумуляторы, автоматика и комплектующие. Подберём оборудование и доставим по Минску и области.',

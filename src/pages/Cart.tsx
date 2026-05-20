@@ -6,6 +6,7 @@ import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { useOrders } from '../context/OrdersContext';
 import { useStore } from '../context/StoreContext';
 import { ProductImage } from '../components/ProductImage';
+import { ConsentField } from '../components/ConsentField';
 import './Account.css';
 import './Cart.css';
 
@@ -15,6 +16,7 @@ export function Cart() {
   const { user } = useCustomerAuth();
   const { submitOrder } = useOrders();
   const [sent, setSent] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', comment: '' });
 
   useEffect(() => {
@@ -29,6 +31,7 @@ export function Cart() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!consent) return;
     submitOrder({
       customerName: form.name,
       phone: form.phone,
@@ -85,7 +88,7 @@ export function Cart() {
               <ProductImage product={product} size="thumb" />
               <div className="cart-item-info">
                 <Link to={`/product/${product.slug}`}>{product.name}</Link>
-                <span className="cart-item-price">{formatPrice(product.price)}</span>
+                <span className="cart-item-price">{formatPrice(product.price, true)}</span>
               </div>
               <div className="cart-item-qty">
                 <button
@@ -104,7 +107,7 @@ export function Cart() {
                   +
                 </button>
               </div>
-              <strong>{formatPrice(product.price * quantity)}</strong>
+              <strong>{formatPrice(product.price * quantity, true)}</strong>
               <button
                 type="button"
                 className="cart-remove"
@@ -120,7 +123,7 @@ export function Cart() {
         <aside className="cart-summary">
           <h2>Оформление</h2>
           <p className="cart-total">
-            Итого: <strong>{formatPrice(totalPrice)}</strong>
+            Итого: <strong>{formatPrice(totalPrice, true)}</strong>
           </p>
           <p className="cart-note">{site.markupNote}</p>
           {!user && (
@@ -158,7 +161,13 @@ export function Cart() {
                 onChange={(e) => setForm({ ...form, comment: e.target.value })}
               />
             </label>
-            <button type="submit" className="btn btn-primary btn-lg">
+            <ConsentField
+              id="order-consent"
+              variant="order"
+              checked={consent}
+              onChange={setConsent}
+            />
+            <button type="submit" className="btn btn-primary btn-lg" disabled={!consent}>
               Отправить заявку
             </button>
           </form>
