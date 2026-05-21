@@ -25,7 +25,7 @@ export const DEFAULT_SITE: SiteConfig = {
     'Скважинные и дренажные насосы, станции, гидроаккумуляторы, автоматика и комплектующие. Подберём оборудование и доставим по Минску и области.',
 };
 
-/** Логин и пароль админки (на Railway задайте VITE_ADMIN_LOGIN / VITE_ADMIN_PASSWORD) */
+/** Логин и пароль админки (перед сборкой: VITE_ADMIN_LOGIN / VITE_ADMIN_PASSWORD в .env.domen) */
 export const ADMIN = {
   login: import.meta.env.VITE_ADMIN_LOGIN || 'Андрей Емельянов',
   password: import.meta.env.VITE_ADMIN_PASSWORD || '18031981',

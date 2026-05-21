@@ -15,8 +15,6 @@ public/build-info.json
 .env
 .env.*
 !.env.example
-.env.railway
-!.env.railway.example
 .env.domen
 !.env.domen.example
 /release/

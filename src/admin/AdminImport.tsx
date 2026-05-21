@@ -312,10 +312,10 @@ export function AdminImport() {
             borderRadius: 8,
           }}
         >
-          <strong>Сайт на Railway:</strong> импорт в админке сохраняет фото только в этом браузере.
-          Чтобы фото видели все посетители, на компьютере с прайсом выполните{' '}
-          <code>npm run export-catalog -- путь\к\прайсу.xlsx</code>, затем закоммитьте{' '}
-          <code>public/catalog</code> и <code>public/product-images</code>, затем push в GitHub.
+          <strong>Сайт на akvasnab.by:</strong> импорт в админке сохраняет данные только в этом браузере.
+          Чтобы каталог и фото видели все посетители, на компьютере с прайсом выполните{' '}
+          <code>npm run export-catalog -- путь\к\прайсу.xlsx</code>, затем{' '}
+          <code>npm run deploy:domen</code> (заливка на хостинг domen.by).
         </p>
       </div>
     </div>

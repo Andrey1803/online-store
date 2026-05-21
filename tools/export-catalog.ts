@@ -1,5 +1,5 @@
 /**
- * Экспорт каталога и фото из Excel в public/catalog/ для деплоя на Railway.
+ * Экспорт каталога и фото из Excel в public/catalog/ для заливки на domen.by.
  * Использование: npm run export-catalog -- "C:\path\to\akvabreg_mega.xlsx"
  */
 import { mkdir, writeFile, rm, readFile } from 'node:fs/promises';
@@ -86,7 +86,7 @@ async function main() {
 
   console.log(`Готово: public/catalog/store.json`);
   console.log(`Файлов фото: ${savedImages} в public/product-images/`);
-  console.log('Дальше: git add public/catalog && git commit && git push (деплой на Railway).');
+  console.log('Дальше: npm run deploy:domen  (сборка и архив / FTP на akvasnab.by).');
 }
 
 main().catch((e) => {
