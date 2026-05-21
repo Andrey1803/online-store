@@ -8,6 +8,7 @@
     "build": "node tools/write-build-info.mjs && tsc -b && vite build",
     "export-catalog": "tsx tools/export-catalog.ts",
     "start": "node server.js",
+    "deploy:domen": "powershell -NoProfile -ExecutionPolicy Bypass -File ./deploy-domen.ps1",
     "lint": "eslint .",
     "preview": "vite preview"
   },

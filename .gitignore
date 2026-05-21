@@ -17,6 +17,9 @@ public/build-info.json
 !.env.example
 .env.railway
 !.env.railway.example
+.env.domen
+!.env.domen.example
+/release/
 
 # Локальные артефакты анализа (не нужны на сервере)
 excel_analysis.json
