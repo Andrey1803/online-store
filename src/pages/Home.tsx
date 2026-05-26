@@ -1,6 +1,8 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { PageMeta } from '../components/PageMeta';
 import { ProductCard } from '../components/ProductCard';
+import { ORGANIZATION_JSON_LD, STATIC_PAGE_SEO, WEBSITE_JSON_LD } from '../data/seo';
 import { useProductActivity } from '../hooks/useProductActivity';
 import { useStore } from '../context/StoreContext';
 import type { Product } from '../data/products';
@@ -58,6 +60,12 @@ export function Home() {
 
   return (
     <div className="home">
+      <PageMeta
+        title={STATIC_PAGE_SEO.home.title}
+        description={STATIC_PAGE_SEO.home.description}
+        path={STATIC_PAGE_SEO.home.path}
+        jsonLd={[ORGANIZATION_JSON_LD, WEBSITE_JSON_LD]}
+      />
       <section className="home-hero">
         <div className="home-hero-bg" aria-hidden />
         <div className="home-hero-inner">

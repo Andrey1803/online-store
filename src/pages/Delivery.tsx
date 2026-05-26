@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom';
+import { PageMeta } from '../components/PageMeta';
 import { COMPANY } from '../data/company';
+import { STATIC_PAGE_SEO } from '../data/seo';
 import { useStore } from '../context/StoreContext';
 
 export function Delivery() {
   const { site } = useStore();
+  const seo = STATIC_PAGE_SEO.delivery;
 
   return (
     <div className="info-page">
+      <PageMeta title={seo.title} description={seo.description} path={seo.path} />
       <h1>Доставка и оплата</h1>
       <section>
         <h2>Доставка</h2>

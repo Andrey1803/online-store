@@ -1,10 +1,15 @@
 import { Link } from 'react-router-dom';
+import { PageMeta } from '../components/PageMeta';
 import { CompanyRequisites } from '../components/CompanyRequisites';
 import { COMPANY } from '../data/company';
+import { STATIC_PAGE_SEO } from '../data/seo';
 
 export function PrivacyPolicy() {
+  const seo = STATIC_PAGE_SEO.privacy;
+
   return (
     <article className="info-page legal-doc">
+      <PageMeta title={seo.title} description={seo.description} path={seo.path} />
       <h1>Политика обработки персональных данных</h1>
       <p className="legal-doc__meta">
         Дата размещения: {COMPANY.legalDocsDate}. Сайт: {COMPANY.siteUrl}

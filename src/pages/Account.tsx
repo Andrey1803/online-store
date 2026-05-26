@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import { PageMeta } from '../components/PageMeta';
+import { STATIC_PAGE_SEO } from '../data/seo';
 import { ORDER_STATUS_LABELS } from '../data/orders';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { useOrders } from '../context/OrdersContext';
@@ -38,8 +40,11 @@ export function Account() {
     }
   };
 
+  const seo = STATIC_PAGE_SEO.account;
+
   return (
     <div className="account-page account-page--wide">
+      <PageMeta title={seo.title} description={seo.description} path={seo.path} noindex />
       <div className="account-card">
         <div className="account-profile-head">
           <div>

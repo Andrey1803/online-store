@@ -1,0 +1,8 @@
+# Папка catalog/ хранит store.json; маршруты /catalog/* — это SPA (React).
+# Без этого правила сервер отдаёт 403 Forbidden на /catalog/
+Options -Indexes
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^store\.json$ - [L]
+  RewriteRule ^ /index.html [L]
+</IfModule>

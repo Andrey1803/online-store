@@ -157,6 +157,22 @@
   color: #38bdf8 !important;
 }
 
+.footer-belgie {
+  text-align: center;
+  font-size: 0.8rem;
+  max-width: var(--max-width);
+  margin: 0.75rem auto 0;
+  color: #94a3b8;
+}
+
+.footer-belgie a {
+  color: #7dd3fc;
+}
+
+.footer-belgie a:hover {
+  color: #38bdf8;
+}
+
 .footer-copy {
   text-align: center;
   font-size: 0.8rem;
@@ -177,6 +193,27 @@
   min-height: 100vh;
 }
 
+.nav-toggle {
+  display: none;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nav-call {
+  display: none;
+  font-weight: 700;
+  color: var(--color-primary) !important;
+}
+
+.mobile-call-bar {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .header-main {
     flex-wrap: wrap;
@@ -193,9 +230,50 @@
     font-size: 1.25rem;
   }
 
+  .nav-toggle {
+    display: block;
+    margin-left: auto;
+  }
+
   .nav {
-    order: 3;
+    display: none;
+    order: 10;
     width: 100%;
-    justify-content: center;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 0 0.5rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .nav--open {
+    display: flex;
+  }
+
+  .nav-call {
+    display: block;
+  }
+
+  .account-btn {
+    max-width: 110px;
+    font-size: 0.85rem;
+  }
+
+  .mobile-call-bar {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 99;
+    text-align: center;
+    padding: 0.55rem 1rem;
+    background: var(--color-primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    box-shadow: var(--shadow);
+  }
+
+  .mobile-call-bar:hover {
+    color: #fff;
+    background: var(--color-primary-dark);
   }
 }

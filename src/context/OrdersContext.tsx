@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { OrderRequest, OrderStatus, SubmitOrderInput } from '../data/orders';
+import { notifyOrderByEmail, type OrderNotifyResult } from '../lib/orderNotify';
 
 const STORAGE_KEY = 'akvasnab-orders';
 
@@ -31,7 +32,7 @@ function createOrderId(): string {
 interface OrdersContextValue {
   orders: OrderRequest[];
   newOrdersCount: number;
-  submitOrder: (input: SubmitOrderInput) => OrderRequest;
+  submitOrder: (input: SubmitOrderInput) => Promise<{ order: OrderRequest; notify: OrderNotifyResult }>;
   getOrdersForCustomer: (customerId: string) => OrderRequest[];
   updateOrderStatus: (id: string, status: OrderStatus) => void;
   deleteOrder: (id: string) => void;
@@ -46,7 +47,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
   }, [orders]);
 
-  const submitOrder = useCallback((input: SubmitOrderInput): OrderRequest => {
+  const submitOrder = useCallback(async (input: SubmitOrderInput) => {
     const order: OrderRequest = {
       id: createOrderId(),
       createdAt: new Date().toISOString(),
@@ -54,13 +55,15 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       customerName: input.customerName.trim(),
       phone: input.phone.trim(),
       comment: input.comment?.trim() || undefined,
+      deliveryMethod: input.deliveryMethod,
       items: input.items,
       total: input.total,
       customerId: input.customerId,
       customerEmail: input.customerEmail,
     };
     setOrders((prev) => [order, ...prev]);
-    return order;
+    const notify = await notifyOrderByEmail(order);
+    return { order, notify };
   }, []);
 
   const updateOrderStatus = useCallback((id: string, status: OrderStatus) => {

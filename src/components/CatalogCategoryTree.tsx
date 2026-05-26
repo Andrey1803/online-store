@@ -10,6 +10,7 @@ type BranchProps = {
   expandedIds: Set<string>;
   getSubcategories: (parentId: string) => Category[];
   onToggleExpand: (id: string) => void;
+  onCategorySelect?: () => void;
 };
 
 type TreeRowProps = {
@@ -20,6 +21,7 @@ type TreeRowProps = {
   isActive: boolean;
   icon?: string;
   onToggleExpand: (id: string) => void;
+  onCategorySelect?: () => void;
 };
 
 function CategoryTreeRow({
@@ -30,6 +32,7 @@ function CategoryTreeRow({
   isActive,
   icon,
   onToggleExpand,
+  onCategorySelect,
 }: TreeRowProps) {
   return (
     <div
@@ -54,6 +57,7 @@ function CategoryTreeRow({
       <Link
         to={`/catalog/${cat.slug}`}
         className={`cat-link ${depth > 0 ? 'sub' : ''} ${isActive ? 'active' : ''}`}
+        onClick={onCategorySelect}
       >
         {icon != null && icon !== '' ? (
           <span className="cat-label">
@@ -75,6 +79,7 @@ export function CatalogCategoryBranch({
   expandedIds,
   getSubcategories,
   onToggleExpand,
+  onCategorySelect,
 }: BranchProps) {
   const subs = getSubcategories(parentId);
   if (!subs.length) return null;
@@ -96,6 +101,7 @@ export function CatalogCategoryBranch({
               isOpen={isOpen}
               isActive={isActive}
               onToggleExpand={onToggleExpand}
+              onCategorySelect={onCategorySelect}
             />
             {isOpen && hasChildren && (
               <CatalogCategoryBranch
@@ -106,6 +112,7 @@ export function CatalogCategoryBranch({
                 expandedIds={expandedIds}
                 getSubcategories={getSubcategories}
                 onToggleExpand={onToggleExpand}
+                onCategorySelect={onCategorySelect}
               />
             )}
           </li>

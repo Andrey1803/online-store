@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom';
+import { PageMeta } from '../components/PageMeta';
 import { CompanyRequisites } from '../components/CompanyRequisites';
+import { STATIC_PAGE_SEO } from '../data/seo';
 import { useStore } from '../context/StoreContext';
 
 export function Contacts() {
   const { site } = useStore();
+  const seo = STATIC_PAGE_SEO.contacts;
 
   return (
     <div className="info-page">
+      <PageMeta title={seo.title} description={seo.description} path={seo.path} />
       <h1>Контакты</h1>
       <div className="contacts-grid">
         <div>

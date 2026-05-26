@@ -9,6 +9,8 @@ export interface OrderLineItem {
   quantity: number;
 }
 
+export type DeliveryMethod = 'delivery' | 'pickup';
+
 export interface OrderRequest {
   id: string;
   createdAt: string;
@@ -16,6 +18,7 @@ export interface OrderRequest {
   customerName: string;
   phone: string;
   comment?: string;
+  deliveryMethod?: DeliveryMethod;
   items: OrderLineItem[];
   total: number;
   /** Зарегистрированный клиент */
@@ -34,6 +37,7 @@ export type SubmitOrderInput = {
   customerName: string;
   phone: string;
   comment?: string;
+  deliveryMethod?: DeliveryMethod;
   items: OrderLineItem[];
   total: number;
   customerId?: string;

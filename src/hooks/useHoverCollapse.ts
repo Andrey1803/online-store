@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FocusEvent } from 'react';
 
-const COLLAPSE_DELAY_MS = 2000;
+/** Скрыть блок через 0,4 с после ухода курсора */
+const COLLAPSE_DELAY_MS = 400;
 
 export function useHoverCollapse() {
   const [canHover, setCanHover] = useState(

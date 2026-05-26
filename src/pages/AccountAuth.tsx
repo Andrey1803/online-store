@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { PageMeta } from '../components/PageMeta';
+import { STATIC_PAGE_SEO } from '../data/seo';
 import { useCustomerAuth } from '../context/CustomerAuthContext';
 import { ConsentField } from '../components/ConsentField';
 import './Account.css';
@@ -69,8 +71,11 @@ export function AccountAuth() {
     }
   };
 
+  const seo = STATIC_PAGE_SEO.accountLogin;
+
   return (
     <div className="account-page">
+      <PageMeta title={seo.title} description={seo.description} path={seo.path} noindex />
       <div className="account-card">
         <h1>Личный кабинет</h1>
         <p className="account-lead">

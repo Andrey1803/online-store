@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 import { BackButton, getStoreBackFallback, getStoreBackLabel } from './BackButton';
 import { SiteNotice } from './SiteNotice';
 import { CompanyRequisites } from './CompanyRequisites';
+import { COMPANY } from '../data/company';
 import './Layout.css';
 
 type BuildInfo = { sha: string; builtAt: string };
@@ -17,6 +18,11 @@ export function Layout() {
   const location = useLocation();
   const showBack = location.pathname !== '/';
   const [buildInfo, setBuildInfo] = useState<BuildInfo | null>(null);
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     fetch('/build-info.json', { cache: 'no-store' })
@@ -48,10 +54,22 @@ export function Layout() {
               <small>{site.tagline}</small>
             </span>
           </Link>
-          <nav className="nav">
+          <button
+            type="button"
+            className="nav-toggle"
+            aria-expanded={navOpen}
+            aria-controls="site-nav"
+            onClick={() => setNavOpen((o) => !o)}
+          >
+            {navOpen ? '✕' : '☰'}
+          </button>
+          <nav id="site-nav" className={`nav${navOpen ? ' nav--open' : ''}`}>
             <Link to="/catalog">Каталог</Link>
             <Link to="/delivery">Доставка</Link>
             <Link to="/contacts">Контакты</Link>
+            <a href={site.phoneHref} className="nav-call">
+              Позвонить
+            </a>
           </nav>
           <Link
             to={isAuthenticated ? '/account' : '/account/login'}
@@ -66,6 +84,9 @@ export function Layout() {
           </Link>
         </div>
       </header>
+      <a href={site.phoneHref} className="mobile-call-bar">
+        📞 {site.phone}
+      </a>
 
       <main className="main">
         <Outlet />
@@ -99,6 +120,13 @@ export function Layout() {
           </div>
         </div>
         <CompanyRequisites compact />
+        <p className="footer-belgie">
+          Зарегистрирован в реестре{' '}
+          <a href={COMPANY.belgieUrl} target="_blank" rel="noopener noreferrer">
+            БелГИЭ
+          </a>
+          , № {COMPANY.belgieId}
+        </p>
         <p className="footer-copy">
           © {new Date().getFullYear()} {site.name}. {site.markupNote}
           {buildInfo && (

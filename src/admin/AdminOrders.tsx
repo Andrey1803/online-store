@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ORDER_STATUS_LABELS, type OrderRequest, type OrderStatus } from '../data/orders';
+import {
+  ORDER_STATUS_LABELS,
+  type OrderRequest,
+  type OrderStatus,
+} from '../data/orders';
+import { formatOrderNumber } from '../lib/orderNotify';
 import { useOrders } from '../context/OrdersContext';
 import { formatPrice } from '../lib/catalog';
 import { formatOrderDate } from '../lib/formatDate';
@@ -36,8 +41,8 @@ export function AdminOrders() {
     <div className="admin-page">
       <h1>Заявки</h1>
       <p className="subtitle">
-        Заявки из корзины сохраняются в этом браузере. Для приёма заказов с сайта посетителей
-        позже понадобится сервер или почта.
+        Новые заявки с сайта приходят на <strong>info@akvasnab.by</strong>. Здесь — копия в этом
+        браузере для учёта статусов (удобно после тестового заказа с этого же ПК).
       </p>
 
       <div className="admin-order-filters">
@@ -114,7 +119,11 @@ function OrderCard({
             {order.phone}
           </a>
           <span className="admin-order-meta">
-            {formatOrderDate(order.createdAt)} · {itemsCount} шт. · {formatPrice(order.total)}
+            {formatOrderNumber(order)} · {formatOrderDate(order.createdAt)} · {itemsCount} шт. ·{' '}
+            {formatPrice(order.total)}
+            {order.deliveryMethod
+              ? ` · ${order.deliveryMethod === 'pickup' ? 'Самовывоз' : 'Доставка'}`
+              : ''}
             {order.customerEmail ? ` · ${order.customerEmail}` : ''}
           </span>
         </div>

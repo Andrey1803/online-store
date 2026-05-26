@@ -1,9 +1,14 @@
 import { Link } from 'react-router-dom';
+import { PageMeta } from '../components/PageMeta';
 import { COMPANY } from '../data/company';
+import { STATIC_PAGE_SEO } from '../data/seo';
 
 export function Returns() {
+  const seo = STATIC_PAGE_SEO.returns;
+
   return (
     <article className="info-page legal-doc">
+      <PageMeta title={seo.title} description={seo.description} path={seo.path} />
       <h1>Возврат, обмен и гарантия</h1>
       <p className="legal-doc__meta">Дата размещения: {COMPANY.legalDocsDate}</p>
 

@@ -1,13 +1,17 @@
 import { Link } from 'react-router-dom';
+import { PageMeta } from '../components/PageMeta';
 import { CompanyRequisites } from '../components/CompanyRequisites';
 import { COMPANY } from '../data/company';
+import { STATIC_PAGE_SEO } from '../data/seo';
 import { useStore } from '../context/StoreContext';
 
 export function About() {
   const { site } = useStore();
+  const seo = STATIC_PAGE_SEO.about;
 
   return (
     <article className="info-page legal-doc">
+      <PageMeta title={seo.title} description={seo.description} path={seo.path} />
       <h1>О компании</h1>
       <p>
         <strong>{site.name}</strong> — интернет-витрина {COMPANY.shortName}. Мы подбираем и поставляем

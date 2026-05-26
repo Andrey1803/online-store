@@ -17,7 +17,7 @@ export const DEFAULT_SITE: SiteConfig = {
   tagline: 'Насосы и водоснабжение',
   phone: '+375 (29) 147-21-08',
   phoneHref: 'tel:+375291472108',
-  email: '1472108@mail.ru',
+  email: 'info@akvasnab.by',
   city: 'Минск и область',
   markupNote: VAT_PRICE_NOTE,
   heroTitle: 'Насосы и водоснабжение под ключ',

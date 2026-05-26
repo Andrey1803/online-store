@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Category } from '../data/categories';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { PageMeta } from '../components/PageMeta';
+import { truncate } from '../lib/seo';
+import { STATIC_PAGE_SEO } from '../data/seo';
 import { CatalogCategoryBranch, CategoryTreeRow } from '../components/CatalogCategoryTree';
 import { isCategoryInTree } from '../lib/catalog';
 import { ProductCard } from '../components/ProductCard';
@@ -17,13 +19,14 @@ import {
 } from '../lib/catalogFilter';
 import './Catalog.css';
 
+const PAGE_SIZE = 24;
+
 export function Catalog() {
   const {
     products,
     mainCategories,
     categories,
     getCategoryBySlug,
-    getCategoryById,
     getSubcategories,
     getProductsByCategory,
   } = useStore();
@@ -32,24 +35,20 @@ export function Catalog() {
   const navigate = useNavigate();
   const q = searchParams.get('q') ?? '';
   const [localSearch, setLocalSearch] = useState(q);
+  const [page, setPage] = useState(1);
 
   const category = categorySlug ? getCategoryBySlug(categorySlug) : undefined;
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
 
-  /** При смене раздела — раскрыть путь к нему (не мешает ручному сворачиванию) */
+  const collapseCategoryTree = useCallback(() => {
+    setExpandedIds(new Set());
+  }, []);
+
+  /** При выборе раздела — свернуть дерево категорий */
   useEffect(() => {
-    if (!category) return;
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      let cur: Category | undefined = category;
-      while (cur) {
-        next.add(cur.id);
-        cur = cur.parentId ? getCategoryById(cur.parentId) : undefined;
-      }
-      return next;
-    });
-  }, [category?.id, getCategoryById]);
+    collapseCategoryTree();
+  }, [categorySlug, collapseCategoryTree]);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedIds((prev) => {
@@ -102,22 +101,54 @@ export function Catalog() {
   }, [q]);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setPage(1);
   }, [categorySlug, q, effectiveFilters]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [categorySlug, q, effectiveFilters, page]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, safePage]);
 
   const resetAll = () => {
     navigate('/catalog');
   };
 
+  const seoTitle = q
+    ? `Поиск: ${q}`
+    : category
+      ? category.name
+      : STATIC_PAGE_SEO.catalog.title;
+  const seoDescription = q
+    ? `Результаты поиска «${q}» в каталоге насосов и оборудования. ${filtered.length} позиций.`
+    : category
+      ? truncate(`${category.name}: ${category.description}. Каталог ${filtered.length} товаров. Доставка по Минску.`)
+      : STATIC_PAGE_SEO.catalog.description;
+  const seoPath = q
+    ? `/catalog?q=${encodeURIComponent(q)}`
+    : category
+      ? `/catalog/${category.slug}`
+      : STATIC_PAGE_SEO.catalog.path;
+
   return (
     <div className="catalog-page">
+      <PageMeta title={seoTitle} description={seoDescription} path={seoPath} />
       <div className="catalog-layout">
         <aside className="catalog-sidebar">
           <h2>Каталог</h2>
           <nav className="catalog-sidebar-nav" aria-label="Разделы каталога">
           <ul className="cat-list">
             <li>
-              <Link to="/catalog" className={!categorySlug ? 'active' : ''}>
+              <Link
+                to="/catalog"
+                className={!categorySlug ? 'active' : ''}
+                onClick={collapseCategoryTree}
+              >
                 Все товары
               </Link>
             </li>
@@ -137,6 +168,7 @@ export function Catalog() {
                     isActive={isActive}
                     icon={cat.icon}
                     onToggleExpand={toggleExpand}
+                    onCategorySelect={collapseCategoryTree}
                   />
                   {isExpanded && hasChildren && (
                     <CatalogCategoryBranch
@@ -147,6 +179,7 @@ export function Catalog() {
                       expandedIds={expandedIds}
                       getSubcategories={getSubcategories}
                       onToggleExpand={toggleExpand}
+                      onCategorySelect={collapseCategoryTree}
                     />
                   )}
                 </li>
@@ -204,11 +237,36 @@ export function Catalog() {
               </button>
             </div>
           ) : (
-            <div className="product-grid">
-              {filtered.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
+            <>
+              <div className="product-grid">
+                {pageItems.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <nav className="catalog-pagination" aria-label="Страницы каталога">
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    disabled={safePage <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    ← Назад
+                  </button>
+                  <span>
+                    Страница {safePage} из {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    Вперёд →
+                  </button>
+                </nav>
+              )}
+            </>
           )}
         </div>
       </div>

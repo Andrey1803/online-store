@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { PageMeta } from '../components/PageMeta';
 import { formatPrice } from '../lib/catalog';
 import { COMPANY } from '../data/company';
+import { ORGANIZATION_JSON_LD, productJsonLd } from '../data/seo';
+import { absoluteUrl, truncate } from '../lib/seo';
 import { recordProductView } from '../lib/productActivity';
 import { getProductSpecs } from '../lib/productSpecs';
 import { useStore } from '../context/StoreContext';
@@ -22,6 +25,7 @@ export function ProductPage() {
   if (!product) {
     return (
       <div className="empty-state">
+        <PageMeta title="Товар не найден" description="Товар не найден в каталоге" path="/catalog" noindex />
         <h1>Товар не найден</h1>
         <Link to="/catalog" className="btn btn-primary">
           В каталог
@@ -48,8 +52,19 @@ export function ProductPage() {
     }
   };
 
+  const productImage = product.image ? absoluteUrl(product.image) : undefined;
+
   return (
     <div className="product-page">
+      <PageMeta
+        title={product.name}
+        description={truncate(
+          `${product.brand} ${product.name}. ${product.description ?? ''} Цена ${formatPrice(product.price, true)}. Купить в Минске.`,
+        )}
+        path={`/product/${product.slug}`}
+        image={productImage}
+        jsonLd={[ORGANIZATION_JSON_LD, productJsonLd(product)]}
+      />
       <nav className="breadcrumbs">
         <Link to="/">Главная</Link>
         <span>/</span>
